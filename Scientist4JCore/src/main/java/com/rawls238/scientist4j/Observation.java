@@ -19,18 +19,14 @@ public class Observation<T> {
     private long duration;
 
     public Observation(String name, Timer timer) {
-        new Observation(name, timer, new HashMap());
+        this(name, timer, new HashMap());
     }
 
     public Observation(String name, Timer timer, Map<String, Object> context) {
-        setName(name);
+        this.name = name;
         this.timer = timer;
         this.context = context;
         this.exception = Optional.empty();
-    }
-
-    public void setName(String name) {
-        this.name = name;
     }
 
     public String getName() {

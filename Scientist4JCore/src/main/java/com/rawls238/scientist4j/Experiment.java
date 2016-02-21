@@ -21,7 +21,7 @@ public class Experiment<T> {
     private final Counter totalCount;
 
     public Experiment() {
-        this("Experiment");
+      this("Experiment");
     }
 
     public Experiment(String name) {
@@ -37,11 +37,11 @@ public class Experiment<T> {
         totalCount = metrics.counter(MetricRegistry.name(NAMESPACE_PREFIX, "total"));
     }
 
-    static void startReport() {
+    public static void startReport() {
         startReport(1, TimeUnit.SECONDS);
     }
 
-    static void startReport(int pollingInterval, TimeUnit timeUnit) {
+    public static void startReport(int pollingInterval, TimeUnit timeUnit) {
         ConsoleReporter reporter = ConsoleReporter.forRegistry(metrics)
                 .convertDurationsTo(TimeUnit.MILLISECONDS)
                 .build();
@@ -56,26 +56,26 @@ public class Experiment<T> {
         return name;
     }
 
-    public T run(String name, Supplier<T> control, Supplier<T> candidate) {
+    public T run(Supplier<T> control, Supplier<T> candidate) throws Exception {
         Observation<T> controlObservation = executeResult("control", controlTimer, control, true);
-        Observation<T> candidateObservation = executeResult(name, candidateTimer, candidate, false);
+        Observation<T> candidateObservation = executeResult("candidate", candidateTimer, candidate, false);
         Result result = new Result(this, controlObservation, candidateObservation);
         publish(result);
         return controlObservation.getValue();
     }
 
-    public Observation executeResult(String name, Timer timer, Supplier<T> control, boolean shouldThrow) {
-        Observation<T> observation = new Observation<T>(name, timer);
+    public Observation executeResult(String name, Timer timer, Supplier<T> control, boolean shouldThrow) throws Exception {
+        Observation<T> observation = new Observation(name, timer);
         observation.startTimer();
         try {
             observation.setValue(control.get());
         } catch (Exception e) {
-            if (shouldThrow) {
-                throw e;
-            }
             observation.setException(e);
         } finally {
             observation.endTimer();
+            if (shouldThrow && observation.getException().isPresent()) {
+              throw observation.getException().get();
+            }
             return observation;
         }
     }
@@ -90,6 +90,10 @@ public class Experiment<T> {
         return true;
     }
 
+    protected void publish(Result r) {
+        return;
+    }
+
     private void handleComparisonMismatch(Observation<T> controlVal, Observation<T> candidateVal) throws MismatchException {
         String msg;
         if (candidateVal.getException().isPresent()) {
@@ -102,9 +106,5 @@ public class Experiment<T> {
                     .append(controlVal.getValue()).append(" != ").append(candidateVal.getValue()).append(")").toString();
         }
         throw new MismatchException(msg);
-    }
-
-    protected void publish(Result r) {
-        return;
     }
 }
