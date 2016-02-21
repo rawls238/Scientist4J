@@ -94,6 +94,10 @@ public class Experiment<T> {
         return;
     }
 
+    protected boolean enabled() {
+      return true;
+    }
+
     private void handleComparisonMismatch(Observation<T> controlVal, Observation<T> candidateVal) throws MismatchException {
         String msg;
         if (candidateVal.getException().isPresent()) {
