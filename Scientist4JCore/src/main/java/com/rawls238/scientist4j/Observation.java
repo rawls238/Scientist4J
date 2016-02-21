@@ -1,0 +1,67 @@
+package com.rawls238.scientist4j;
+
+import com.codahale.metrics.Metric;
+import com.codahale.metrics.MetricRegistry;
+import com.codahale.metrics.Timer;
+
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
+
+public class Observation<T> {
+
+    private String name;
+    private Optional<Exception> exception;
+    private Map<String, Object> context;
+    private T value;
+    private Timer.Context timerContext;
+    private Timer timer;
+    private long duration;
+
+    public Observation(String name, Timer timer) {
+        new Observation(name, timer, new HashMap());
+    }
+
+    public Observation(String name, Timer timer, Map<String, Object> context) {
+        setName(name);
+        this.timer = timer;
+        this.context = context;
+        this.exception = Optional.empty();
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setValue(T o) {
+        this.value = o;
+    }
+
+    public T getValue() {
+        return value;
+    }
+
+    public void setException(Exception e) {
+        this.exception = Optional.of(e);
+    }
+
+    public Optional<Exception> getException() {
+        return exception;
+    }
+
+    public void startTimer() {
+        timerContext = timer.time();
+    }
+
+    public void endTimer() {
+        duration = timerContext.stop();
+    }
+
+    public long getDuration() {
+        return duration;
+    }
+}
