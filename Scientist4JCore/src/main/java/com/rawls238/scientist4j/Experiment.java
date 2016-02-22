@@ -44,10 +44,10 @@ public class Experiment<T> {
       this.name = name;
       this.context = context;
       this.raiseOnMismatch = raiseOnMismatch;
-      controlTimer = metrics.timer(MetricRegistry.name(NAMESPACE_PREFIX, "control"));
-      candidateTimer = metrics.timer(MetricRegistry.name(NAMESPACE_PREFIX, "candidate"));
-      mismatchCount = metrics.counter(MetricRegistry.name(NAMESPACE_PREFIX, "mismatch"));
-      totalCount = metrics.counter(MetricRegistry.name(NAMESPACE_PREFIX, "total"));
+      controlTimer = metrics.timer(MetricRegistry.name(NAMESPACE_PREFIX, this.name, "control"));
+      candidateTimer = metrics.timer(MetricRegistry.name(NAMESPACE_PREFIX, this.name, "candidate"));
+      mismatchCount = metrics.counter(MetricRegistry.name(NAMESPACE_PREFIX, this.name, "mismatch"));
+      totalCount = metrics.counter(MetricRegistry.name(NAMESPACE_PREFIX, this.name, "total"));
     }
 
     public static void startReport() {
@@ -116,10 +116,6 @@ public class Experiment<T> {
         handleComparisonMismatch(controlVal, candidateVal);
       }
       return true;
-    }
-
-    protected Object clean(Result<T> r) {
-      return r;
     }
 
     protected void publish(Result<T> r) {

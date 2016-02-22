@@ -4,7 +4,7 @@
 
     <groupId>com.rawls238</groupId>
     <artifactId>Scientist4J</artifactId>
-    <version>1.0</version>
+    <version>1.0-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <properties>
