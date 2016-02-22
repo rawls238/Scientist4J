@@ -12,21 +12,15 @@ public class Observation<T> {
 
     private String name;
     private Optional<Exception> exception;
-    private Map<String, Object> context;
     private T value;
     private Timer.Context timerContext;
     private Timer timer;
     private long duration;
 
     public Observation(String name, Timer timer) {
-        this(name, timer, new HashMap());
-    }
-
-    public Observation(String name, Timer timer, Map<String, Object> context) {
-        this.name = name;
-        this.timer = timer;
-        this.context = context;
-        this.exception = Optional.empty();
+      this.name = name;
+      this.timer = timer;
+      this.exception = Optional.empty();
     }
 
     public String getName() {

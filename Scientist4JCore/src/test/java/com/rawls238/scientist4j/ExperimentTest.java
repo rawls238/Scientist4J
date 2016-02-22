@@ -1,6 +1,5 @@
 package com.rawls238.scientist4j;
 
-import com.rawls238.scientist4j.Experiment;
 import com.rawls238.scientist4j.exceptions.MismatchException;
 import org.junit.Test;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -81,7 +80,7 @@ public class ExperimentTest {
 
   @Test
   public void itWorksWithAnExtendedClass() {
-    Experiment<Integer> exp = new SampleExperimentExtender("test");
+    Experiment<Integer> exp = new TestPublishExperiment("test");
     try {
       exp.run(this::safeFunction, this::safeFunction);
     } catch (Exception e) {
