@@ -50,17 +50,6 @@ public class Experiment<T> {
       totalCount = metrics.counter(MetricRegistry.name(NAMESPACE_PREFIX, this.name, "total"));
     }
 
-    public static void startReport() {
-        startReport(1, TimeUnit.SECONDS);
-    }
-
-    public static void startReport(int pollingInterval, TimeUnit timeUnit) {
-        ConsoleReporter reporter = ConsoleReporter.forRegistry(metrics)
-                .convertDurationsTo(TimeUnit.MILLISECONDS)
-                .build();
-        reporter.start(pollingInterval, timeUnit);
-    }
-
     public boolean getRaiseOnMismatch() {
         return raiseOnMismatch;
     }

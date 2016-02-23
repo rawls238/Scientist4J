@@ -23,9 +23,8 @@ This does a bunch of stuff behind the scenes:
 * Swallows (but records) any exceptions raised by the candidate and
 * Publishes all this information.
 
-Out of the box this uses [Dropwizard metrics](https://dropwizard.github.io/metrics/3.1.0/) to report the following stats.
-If you want to hook it into your dropwizard metrics system simply call `Experiment.startReport()` and it will start reporting the following
-metrics which have the form `scientist.[experiment name].*`:
+Out of the box this uses (Dropwizard metrics)[https://dropwizard.github.io/metrics/3.1.0/] to report the following stats.
+The following metrics are reported which have the form `scientist.[experiment name].*`:
 
 * duration of default behavior in ms
 * duration of candidate behavior in ms
