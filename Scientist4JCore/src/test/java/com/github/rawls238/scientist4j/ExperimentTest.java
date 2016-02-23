@@ -1,6 +1,6 @@
-package com.rawls238.scientist4j;
+package com.github.rawls238.scientist4j;
 
-import com.rawls238.scientist4j.exceptions.MismatchException;
+import com.github.rawls238.scientist4j.exceptions.MismatchException;
 import org.junit.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 

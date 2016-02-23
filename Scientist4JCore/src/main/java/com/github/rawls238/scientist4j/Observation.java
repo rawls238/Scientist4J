@@ -1,4 +1,4 @@
-package com.rawls238.scientist4j;
+package com.github.rawls238.scientist4j;
 
 import com.codahale.metrics.Metric;
 import com.codahale.metrics.MetricRegistry;

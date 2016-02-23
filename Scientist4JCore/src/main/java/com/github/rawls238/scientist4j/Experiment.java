@@ -1,10 +1,10 @@
-package com.rawls238.scientist4j;
+package com.github.rawls238.scientist4j;
 
 import com.codahale.metrics.ConsoleReporter;
 import com.codahale.metrics.Counter;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Timer;
-import com.rawls238.scientist4j.exceptions.MismatchException;
+import com.github.rawls238.scientist4j.exceptions.MismatchException;
 
 import java.util.HashMap;
 import java.util.Map;
