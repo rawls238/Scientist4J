@@ -4,6 +4,13 @@ A port of Github's refactoring tool Scientist in Java
 
 # Installation
 
+```java
+<dependency>
+    <groupId>com.github.rawls238</groupId>
+    <artifactId>Scientist4J</artifactId>
+    <version>0.1</version>
+</dependency>
+```
 # Usage
 
 This Java port supports most of the functionality of the original Scientist library in Ruby, however its interface is a bit different.
