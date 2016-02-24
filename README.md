@@ -1,6 +1,6 @@
 # Scientist4J
 
-A port of Github's refactoring tool Scientist in Java
+A port of Github's refactoring tool [Scientist](https://github.com/github/scientist) in Java
 
 # Installation
 
