@@ -45,3 +45,6 @@ Users can optionally override the following functions:
 * compareResults (by default this library just uses `equals` between objects for equality, but in case you want to special case equality between objects)
 * enabled (to limit what % of users get exposed to the new code path - by default it's 100%)
 * runIf (to enforce conditional behavior on who should be exposed to the new code path)
+
+
+License: MIT
