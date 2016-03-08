@@ -7,7 +7,7 @@ A port of Github's refactoring tool [Scientist](https://github.com/github/scient
 ```java
 <dependency>
     <groupId>com.github.rawls238</groupId>
-    <artifactId>Scientist4J</artifactId>
+    <artifactId>Scientist4JCore</artifactId>
     <version>0.1</version>
 </dependency>
 ```
