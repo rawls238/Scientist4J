@@ -44,7 +44,7 @@ e.runAsync(this::controlFunction, this::candidateFunction);
 
 This does a bunch of stuff behind the scenes:
 * It decides whether or not to run the candidate function
-* Runs the two functions asynchronousl
+* Runs the two functions asynchronously
 * Measures the durations of all behaviors
 * Compares the result of the two
 * Swallows (but records) any exceptions raised by the candidate
