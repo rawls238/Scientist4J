@@ -62,33 +62,46 @@ public class Experiment<T> {
     }
 
     public T run(Supplier<T> control, Supplier<T> candidate) throws Exception {
-        Observation<T> controlObservation;
-        Optional<Observation> candidateObservation = Optional.empty();
         if (isAsync()) {
             return runAsync(control, candidate);
         } else {
-            if (Math.random() < 0.5) {
-                controlObservation = executeResult("control", controlTimer, control, true);
-                if (runIf() && enabled()) {
-                    candidateObservation = Optional.of(executeResult("candidate", candidateTimer, candidate, false));
-                }
-            } else {
-                if (runIf() && enabled()) {
-                    candidateObservation = Optional.of(executeResult("candidate", candidateTimer, candidate, false));
-                }
-                controlObservation = executeResult("control", controlTimer, control, true);
-            }
-            Result<T> result = new Result(this, controlObservation, candidateObservation, context);
-            publish(result);
-            return controlObservation.getValue();
+            return runSync(control, candidate);
         }
     }
 
+    private T runSync(Supplier<T> control, Supplier<T> candidate) throws Exception {
+        Observation<T> controlObservation;
+        Optional<Observation> candidateObservation = Optional.empty();
+        if (Math.random() < 0.5) {
+            controlObservation = executeResult("control", controlTimer, control, true);
+            if (runIf() && enabled()) {
+                candidateObservation = Optional.of(executeResult("candidate", candidateTimer, candidate, false));
+            }
+        } else {
+            if (runIf() && enabled()) {
+                candidateObservation = Optional.of(executeResult("candidate", candidateTimer, candidate, false));
+            }
+            controlObservation = executeResult("control", controlTimer, control, true);
+        }
+        Result<T> result = new Result(this, controlObservation, candidateObservation, context);
+        publish(result);
+        return controlObservation.getValue();
+    }
+
     public T runAsync(Supplier<T> control, Supplier<T> candidate) throws Exception {
-        Future<Observation> observationFutureCandidate = null;
-        Future<Observation<T>> observationFutureControl = executor.submit(() -> executeResult("control", controlTimer, control, true));
-        if (runIf() && enabled()) {
-            observationFutureCandidate = executor.submit(() -> executeResult("candidate", candidateTimer, candidate, false));
+        Future<Optional<Observation>> observationFutureCandidate = null;
+        Future<Observation<T>> observationFutureControl;
+
+        if (Math.random() < 0.5) {
+            observationFutureControl = executor.submit(() -> executeResult("control", controlTimer, control, true));
+            if (runIf() && enabled()) {
+                observationFutureCandidate = executor.submit(() -> Optional.of(executeResult("candidate", candidateTimer, candidate, false)));
+            }
+        } else {
+            if (runIf() && enabled()) {
+                observationFutureCandidate = executor.submit(() -> Optional.of(executeResult("candidate", candidateTimer, candidate, false)));
+            }
+            observationFutureControl = executor.submit(() -> executeResult("control", controlTimer, control, true));
         }
 
         Observation<T> controlObservation;
@@ -99,7 +112,7 @@ public class Experiment<T> {
         }
         Optional<Observation> candidateObservation = Optional.empty();
         if (observationFutureCandidate != null) {
-            candidateObservation = Optional.of(observationFutureCandidate.get());
+            candidateObservation = observationFutureCandidate.get();
         }
 
         Result<T> result = new Result(this, controlObservation, candidateObservation, context);
@@ -137,7 +150,8 @@ public class Experiment<T> {
         return true;
     }
 
-    protected void publish(Result<T> r) {}
+    protected void publish(Result<T> r) {
+    }
 
     protected boolean runIf() {
         return true;
@@ -157,10 +171,10 @@ public class Experiment<T> {
             String stackTrace = candidateVal.getException().get().getStackTrace().toString();
             String exceptionName = candidateVal.getException().get().getClass().getName();
             msg = new StringBuilder().append(candidateVal.getName()).append(" raised an exception: ")
-                    .append(exceptionName).append(" ").append(stackTrace).toString();
+                .append(exceptionName).append(" ").append(stackTrace).toString();
         } else {
             msg = new StringBuilder().append(candidateVal.getName()).append(" does not match control value (")
-                    .append(controlVal.getValue()).append(" != ").append(candidateVal.getValue()).append(")").toString();
+                .append(controlVal.getValue()).append(" != ").append(candidateVal.getValue()).append(")").toString();
         }
         throw new MismatchException(msg);
     }
