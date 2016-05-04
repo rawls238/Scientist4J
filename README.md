@@ -11,7 +11,7 @@ A port of Github's refactoring tool [Scientist](https://github.com/github/scient
 <dependency>
     <groupId>com.github.rawls238</groupId>
     <artifactId>Scientist4JCore</artifactId>
-    <version>0.1</version>
+    <version>0.2</version>
 </dependency>
 ```
 # Usage
@@ -20,18 +20,38 @@ This Java port supports most of the functionality of the original Scientist libr
 
 The core component of this library is the `Experiment<T>` class. It's recommended to use this class as a Singleton. The main usage is as follows:
 
+## Synchronous Experiment
+
 ```java
 Experiment<Integer> e = new Experiment("foo");
 e.run(this::controlFunction, this::candidateFunction);
 ```
 
 This does a bunch of stuff behind the scenes:
-* It decides whether or not to run the candidate function,
-* Randomizes the order in which control and candidate functions are run,
-* Measures the durations of all behaviors,
-* Compares the result of the two,
-* Swallows (but records) any exceptions raised by the candidate and
+* It decides whether or not to run the candidate function
+* Randomizes the order in which control and candidate functions are run
+* Measures the durations of all behaviors
+* Compares the result of the two
+* Swallows (but records) any exceptions raised by the candidate
 * Publishes all this information.
+
+## Asynchronous Experiment
+
+```java
+Experiment<Integer> e = new Experiment("foo");
+e.runAsync(this::controlFunction, this::candidateFunction);
+```
+
+This does a bunch of stuff behind the scenes:
+* It decides whether or not to run the candidate function
+* Runs the two functions asynchronously
+* Measures the durations of all behaviors
+* Compares the result of the two
+* Swallows (but records) any exceptions raised by the candidate
+* Publishes all this information.
+
+
+## Dropwizard
 
 Out of the box this uses [Dropwizard metrics](https://dropwizard.github.io/metrics/3.1.0/) to report the following stats.
 The following metrics are reported which have the form `scientist.[experiment name].*`:
@@ -41,6 +61,7 @@ The following metrics are reported which have the form `scientist.[experiment na
 * counter of total number of users going through the codepath
 * counter of number of mismatches
 
+## Optional Configuration
 
 Users can optionally override the following functions:
 
@@ -48,6 +69,7 @@ Users can optionally override the following functions:
 * compareResults (by default this library just uses `equals` between objects for equality, but in case you want to special case equality between objects)
 * enabled (to limit what % of users get exposed to the new code path - by default it's 100%)
 * runIf (to enforce conditional behavior on who should be exposed to the new code path)
+* isAsync (force using the async for legacy code or move to runAsync method)
 
 
 License: MIT
