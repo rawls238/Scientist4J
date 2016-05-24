@@ -11,7 +11,7 @@ A port of Github's refactoring tool [Scientist](https://github.com/github/scient
 <dependency>
     <groupId>com.github.rawls238</groupId>
     <artifactId>Scientist4JCore</artifactId>
-    <version>0.2</version>
+    <version>0.3</version>
 </dependency>
 ```
 # Usage
@@ -60,6 +60,8 @@ The following metrics are reported which have the form `scientist.[experiment na
 * duration of candidate behavior in ms
 * counter of total number of users going through the codepath
 * counter of number of mismatches
+
+You can provide your own metric registry object/bean via the constructor or by extending the Experiement class and overriding the `getMetrics` method.
 
 ## Optional Configuration
 
