@@ -18,7 +18,7 @@ public class Experiment<T> {
 
     private final ExecutorService executor = Executors.newFixedThreadPool(2);
     private static final String NAMESPACE_PREFIX = "scientist";
-    static final MetricRegistry metrics = new MetricRegistry();
+    private static final MetricRegistry metrics = new MetricRegistry();
     private final String name;
     private final boolean raiseOnMismatch;
     private Map<String, Object> context;
@@ -32,25 +32,45 @@ public class Experiment<T> {
     }
 
     public Experiment(String name) {
-        this(name, false);
+        this(name, false, null);
+    }
+
+    public Experiment(String name, MetricRegistry metricRegistry) {
+        this(name, false, metricRegistry);
     }
 
     public Experiment(String name, Map<String, Object> context) {
-        this(name, context, false);
+        this(name, context, false, null);
+    }
+
+    public Experiment(String name, Map<String, Object> context, MetricRegistry metricRegistry) {
+        this(name, context, false, metricRegistry);
     }
 
     public Experiment(String name, boolean raiseOnMismatch) {
-        this(name, new HashMap<>(), raiseOnMismatch);
+        this(name, new HashMap<>(), raiseOnMismatch, null);
     }
 
-    public Experiment(String name, Map<String, Object> context, boolean raiseOnMismatch) {
+    public Experiment(String name, boolean raiseOnMismatch, MetricRegistry metricRegistry) {
+        this(name, new HashMap<>(), raiseOnMismatch, metricRegistry);
+    }
+
+    public Experiment(String name, Map<String, Object> context, boolean raiseOnMismatch, MetricRegistry metricRegistry) {
         this.name = name;
         this.context = context;
         this.raiseOnMismatch = raiseOnMismatch;
-        controlTimer = metrics.timer(MetricRegistry.name(NAMESPACE_PREFIX, this.name, "control"));
-        candidateTimer = metrics.timer(MetricRegistry.name(NAMESPACE_PREFIX, this.name, "candidate"));
-        mismatchCount = metrics.counter(MetricRegistry.name(NAMESPACE_PREFIX, this.name, "mismatch"));
-        totalCount = metrics.counter(MetricRegistry.name(NAMESPACE_PREFIX, this.name, "total"));
+        controlTimer = getMetrics(metricRegistry).timer(MetricRegistry.name(NAMESPACE_PREFIX, this.name, "control"));
+        candidateTimer = getMetrics(metricRegistry).timer(MetricRegistry.name(NAMESPACE_PREFIX, this.name, "candidate"));
+        mismatchCount = getMetrics(metricRegistry).counter(MetricRegistry.name(NAMESPACE_PREFIX, this.name, "mismatch"));
+        totalCount = getMetrics(metricRegistry).counter(MetricRegistry.name(NAMESPACE_PREFIX, this.name, "total"));
+    }
+
+    /**
+     * Allow override here if extending the class, use the one passed into constructor if not null
+     * or resort to the default created one internally
+     */
+    public MetricRegistry getMetrics(MetricRegistry metricRegistry) {
+        return metricRegistry != null ? metricRegistry : metrics;
     }
 
     public boolean getRaiseOnMismatch() {
