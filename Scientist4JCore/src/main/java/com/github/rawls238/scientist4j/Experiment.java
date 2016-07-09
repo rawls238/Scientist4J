@@ -25,6 +25,7 @@ public class Experiment<T> {
     private final Timer controlTimer;
     private final Timer candidateTimer;
     private final Counter mismatchCount;
+    private final Counter candidateExceptionCount;
     private final Counter totalCount;
 
     public Experiment() {
@@ -62,6 +63,7 @@ public class Experiment<T> {
         controlTimer = getMetrics(metricRegistry).timer(MetricRegistry.name(NAMESPACE_PREFIX, this.name, "control"));
         candidateTimer = getMetrics(metricRegistry).timer(MetricRegistry.name(NAMESPACE_PREFIX, this.name, "candidate"));
         mismatchCount = getMetrics(metricRegistry).counter(MetricRegistry.name(NAMESPACE_PREFIX, this.name, "mismatch"));
+        candidateExceptionCount = getMetrics(metricRegistry).counter(MetricRegistry.name(NAMESPACE_PREFIX, this.name, "candidate.exception"));
         totalCount = getMetrics(metricRegistry).counter(MetricRegistry.name(NAMESPACE_PREFIX, this.name, "total"));
     }
 
@@ -96,10 +98,12 @@ public class Experiment<T> {
             controlObservation = executeResult("control", controlTimer, control, true);
             if (runIf() && enabled()) {
                 candidateObservation = Optional.of(executeResult("candidate", candidateTimer, candidate, false));
+                countExceptions(candidateObservation, candidateExceptionCount);
             }
         } else {
             if (runIf() && enabled()) {
                 candidateObservation = Optional.of(executeResult("candidate", candidateTimer, candidate, false));
+                countExceptions(candidateObservation, candidateExceptionCount);
             }
             controlObservation = executeResult("control", controlTimer, control, true);
         }
@@ -124,20 +128,28 @@ public class Experiment<T> {
             observationFutureControl = executor.submit(() -> executeResult("control", controlTimer, control, true));
         }
 
+        Optional<Observation> candidateObservation = Optional.empty();
+        if (observationFutureCandidate != null) {
+            candidateObservation = observationFutureCandidate.get();
+            countExceptions(candidateObservation, candidateExceptionCount);
+        }
         Observation<T> controlObservation;
         try {
             controlObservation = observationFutureControl.get();
         } catch (InterruptedException | ExecutionException e) {
             throw new RuntimeException(e);
         }
-        Optional<Observation> candidateObservation = Optional.empty();
-        if (observationFutureCandidate != null) {
-            candidateObservation = observationFutureCandidate.get();
-        }
+
 
         Result<T> result = new Result(this, controlObservation, candidateObservation, context);
         publish(result);
         return controlObservation.getValue();
+    }
+
+    private void countExceptions(Optional<Observation> observation, Counter exceptions) {
+        if (observation.isPresent() && observation.get().getException().isPresent()) {
+            exceptions.inc();
+        }
     }
 
     public Observation<T> executeResult(String name, Timer timer, Supplier<T> control, boolean shouldThrow) throws Exception {
