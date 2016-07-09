@@ -98,15 +98,15 @@ public class Experiment<T> {
             controlObservation = executeResult("control", controlTimer, control, true);
             if (runIf() && enabled()) {
                 candidateObservation = Optional.of(executeResult("candidate", candidateTimer, candidate, false));
-                countExceptions(candidateObservation, candidateExceptionCount);
             }
         } else {
             if (runIf() && enabled()) {
                 candidateObservation = Optional.of(executeResult("candidate", candidateTimer, candidate, false));
-                countExceptions(candidateObservation, candidateExceptionCount);
             }
             controlObservation = executeResult("control", controlTimer, control, true);
         }
+
+        countExceptions(candidateObservation, candidateExceptionCount);
         Result<T> result = new Result(this, controlObservation, candidateObservation, context);
         publish(result);
         return controlObservation.getValue();
@@ -128,19 +128,18 @@ public class Experiment<T> {
             observationFutureControl = executor.submit(() -> executeResult("control", controlTimer, control, true));
         }
 
-        Optional<Observation> candidateObservation = Optional.empty();
-        if (observationFutureCandidate != null) {
-            candidateObservation = observationFutureCandidate.get();
-            countExceptions(candidateObservation, candidateExceptionCount);
-        }
         Observation<T> controlObservation;
         try {
             controlObservation = observationFutureControl.get();
         } catch (InterruptedException | ExecutionException e) {
             throw new RuntimeException(e);
         }
+        Optional<Observation> candidateObservation = Optional.empty();
+        if (observationFutureCandidate != null) {
+            candidateObservation = observationFutureCandidate.get();
+        }
 
-
+        countExceptions(candidateObservation, candidateExceptionCount);
         Result<T> result = new Result(this, controlObservation, candidateObservation, context);
         publish(result);
         return controlObservation.getValue();
