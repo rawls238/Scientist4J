@@ -60,6 +60,7 @@ The following metrics are reported which have the form `scientist.[experiment na
 * duration of candidate behavior in ms
 * counter of total number of users going through the codepath
 * counter of number of mismatches
+* counter of candidate exceptions
 
 You can provide your own metric registry object/bean via the constructor or by extending the Experiement class and overriding the `getMetrics` method.
 

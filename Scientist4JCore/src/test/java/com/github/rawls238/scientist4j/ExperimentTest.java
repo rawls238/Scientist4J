@@ -1,5 +1,7 @@
 package com.github.rawls238.scientist4j;
 
+import com.codahale.metrics.Counter;
+import com.codahale.metrics.MetricRegistry;
 import com.github.rawls238.scientist4j.exceptions.MismatchException;
 import org.junit.Test;
 
@@ -120,4 +122,14 @@ public class ExperimentTest {
         }
     }
 
+    @Test
+    public void candidateExceptionsAreCounted() throws Exception {
+        MetricRegistry metrics = new MetricRegistry();
+        Experiment<Integer> exp = new Experiment("test", metrics);
+
+        exp.run(() -> { return 1; }, this::exceptionThrowingFunction);
+
+        Counter result = metrics.getCounters().get("scientist.test.candidate.exception");
+        assertThat(result.getCount()).isEqualTo(1);
+    }
 }

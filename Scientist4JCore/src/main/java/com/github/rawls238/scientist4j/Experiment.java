@@ -25,6 +25,7 @@ public class Experiment<T> {
     private final Timer controlTimer;
     private final Timer candidateTimer;
     private final Counter mismatchCount;
+    private final Counter candidateExceptionCount;
     private final Counter totalCount;
 
     public Experiment() {
@@ -62,6 +63,7 @@ public class Experiment<T> {
         controlTimer = getMetrics(metricRegistry).timer(MetricRegistry.name(NAMESPACE_PREFIX, this.name, "control"));
         candidateTimer = getMetrics(metricRegistry).timer(MetricRegistry.name(NAMESPACE_PREFIX, this.name, "candidate"));
         mismatchCount = getMetrics(metricRegistry).counter(MetricRegistry.name(NAMESPACE_PREFIX, this.name, "mismatch"));
+        candidateExceptionCount = getMetrics(metricRegistry).counter(MetricRegistry.name(NAMESPACE_PREFIX, this.name, "candidate.exception"));
         totalCount = getMetrics(metricRegistry).counter(MetricRegistry.name(NAMESPACE_PREFIX, this.name, "total"));
     }
 
@@ -103,6 +105,8 @@ public class Experiment<T> {
             }
             controlObservation = executeResult("control", controlTimer, control, true);
         }
+
+        countExceptions(candidateObservation, candidateExceptionCount);
         Result<T> result = new Result(this, controlObservation, candidateObservation, context);
         publish(result);
         return controlObservation.getValue();
@@ -135,9 +139,16 @@ public class Experiment<T> {
             candidateObservation = observationFutureCandidate.get();
         }
 
+        countExceptions(candidateObservation, candidateExceptionCount);
         Result<T> result = new Result(this, controlObservation, candidateObservation, context);
         publish(result);
         return controlObservation.getValue();
+    }
+
+    private void countExceptions(Optional<Observation> observation, Counter exceptions) {
+        if (observation.isPresent() && observation.get().getException().isPresent()) {
+            exceptions.inc();
+        }
     }
 
     public Observation<T> executeResult(String name, Timer timer, Supplier<T> control, boolean shouldThrow) throws Exception {
