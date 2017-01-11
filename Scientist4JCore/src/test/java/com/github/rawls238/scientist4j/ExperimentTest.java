@@ -6,8 +6,10 @@ import com.github.rawls238.scientist4j.exceptions.MismatchException;
 import org.junit.Test;
 
 import java.util.Date;
+import java.util.function.BiFunction;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.*;
 
 public class ExperimentTest {
 
@@ -134,7 +136,17 @@ public class ExperimentTest {
     }
 
     @Test
-    public void shouldUseCustomComparator() {
-        new Experiment<Integer>("test", new MetricRegistry(), )
+    public void shouldUseCustomComparator() throws Exception {
+        @SuppressWarnings("unchecked")
+        final BiFunction<Integer, Integer, Boolean> comparator = mock(BiFunction.class);
+        when(comparator.apply(1, 2)).thenReturn(false);
+        final Experiment<Integer> e = new ExperimentBuilder<Integer>()
+                .withName("test")
+                .withComparator(comparator)
+                .build();
+
+        e.run(() -> 1, () -> 2);
+
+        verify(comparator).apply(1, 2);
     }
 }
