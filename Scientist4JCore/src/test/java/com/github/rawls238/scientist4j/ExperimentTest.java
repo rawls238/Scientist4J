@@ -48,7 +48,7 @@ public class ExperimentTest {
 
     @Test
     public void itDoesntThrowAnExceptionWhenCandidateFails() {
-        Experiment<Integer> experiment = new Experiment("test");
+        Experiment<Integer> experiment = new Experiment<>("test");
         boolean candidateThrew = false;
         Integer val = 0;
         try {
@@ -64,7 +64,7 @@ public class ExperimentTest {
 
     @Test
     public void itThrowsOnMismatch() {
-        Experiment<Integer> experiment = new Experiment("test", true);
+        Experiment<Integer> experiment = new Experiment<>("test", true);
         boolean candidateThrew = false;
         try {
             experiment.run(this::safeFunction, this::safeFunctionWithDifferentResult);
@@ -79,7 +79,7 @@ public class ExperimentTest {
 
     @Test
     public void itDoesNotThrowOnMatch() {
-        Experiment<Integer> exp = new Experiment("test", true);
+        Experiment<Integer> exp = new Experiment<>("test", true);
         boolean candidateThrew = false;
         Integer val = 0;
         try {
@@ -94,7 +94,7 @@ public class ExperimentTest {
 
     @Test
     public void nonAsyncRunsLongTime() {
-        Experiment<Integer> exp = new Experiment("test", true);
+        Experiment<Integer> exp = new Experiment<>("test", true);
         boolean candidateThrew = false;
         Integer val = 0;
         Date date1 = new Date();
@@ -114,7 +114,7 @@ public class ExperimentTest {
 
     @Test
     public void itWorksWithAnExtendedClass() {
-        Experiment<Integer> exp = new TestPublishExperiment("test");
+        Experiment<Integer> exp = new TestPublishExperiment<>("test");
         try {
             exp.run(this::safeFunction, this::safeFunction);
         } catch (Exception e) {
@@ -125,11 +125,16 @@ public class ExperimentTest {
     @Test
     public void candidateExceptionsAreCounted() throws Exception {
         MetricRegistry metrics = new MetricRegistry();
-        Experiment<Integer> exp = new Experiment("test", metrics);
+        Experiment<Integer> exp = new Experiment<>("test", metrics);
 
         exp.run(() -> { return 1; }, this::exceptionThrowingFunction);
 
         Counter result = metrics.getCounters().get("scientist.test.candidate.exception");
         assertThat(result.getCount()).isEqualTo(1);
+    }
+
+    @Test
+    public void shouldUseCustomComparator() {
+        new Experiment<Integer>("test", new MetricRegistry(), )
     }
 }

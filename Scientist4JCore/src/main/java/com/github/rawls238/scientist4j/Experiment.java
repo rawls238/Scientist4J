@@ -12,6 +12,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.function.BiFunction;
 import java.util.function.Supplier;
 
 public class Experiment<T> {
@@ -27,6 +28,7 @@ public class Experiment<T> {
     private final Counter mismatchCount;
     private final Counter candidateExceptionCount;
     private final Counter totalCount;
+    private final BiFunction<T, T, Boolean> comparator;
 
     public Experiment() {
         this("Experiment");
@@ -57,9 +59,15 @@ public class Experiment<T> {
     }
 
     public Experiment(String name, Map<String, Object> context, boolean raiseOnMismatch, MetricRegistry metricRegistry) {
+        this(name, context, raiseOnMismatch, metricRegistry, Object::equals);
+    }
+
+    public Experiment(String name, Map<String, Object> context, boolean raiseOnMismatch, MetricRegistry metricRegistry, BiFunction<T, T, Boolean> comparator) {
         this.name = name;
         this.context = context;
         this.raiseOnMismatch = raiseOnMismatch;
+        this.comparator = comparator;
+
         controlTimer = getMetrics(metricRegistry).timer(MetricRegistry.name(NAMESPACE_PREFIX, this.name, "control"));
         candidateTimer = getMetrics(metricRegistry).timer(MetricRegistry.name(NAMESPACE_PREFIX, this.name, "candidate"));
         mismatchCount = getMetrics(metricRegistry).counter(MetricRegistry.name(NAMESPACE_PREFIX, this.name, "mismatch"));
@@ -168,7 +176,7 @@ public class Experiment<T> {
     }
 
     protected boolean compareResults(T controlVal, T candidateVal) {
-        return controlVal.equals(candidateVal);
+        return comparator.apply(controlVal, candidateVal);
     }
 
     public boolean compare(Observation<T> controlVal, Observation<T> candidateVal) throws MismatchException {
