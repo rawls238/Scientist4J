@@ -12,6 +12,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.function.BiFunction;
 import java.util.function.Supplier;
 
 public class Experiment<T> {
@@ -27,6 +28,7 @@ public class Experiment<T> {
     private final Counter mismatchCount;
     private final Counter candidateExceptionCount;
     private final Counter totalCount;
+    private final BiFunction<T, T, Boolean> comparator;
 
     public Experiment() {
         this("Experiment");
@@ -57,9 +59,14 @@ public class Experiment<T> {
     }
 
     public Experiment(String name, Map<String, Object> context, boolean raiseOnMismatch, MetricRegistry metricRegistry) {
+        this(name, context, raiseOnMismatch, metricRegistry, Object::equals);
+    }
+
+    public Experiment(String name, Map<String, Object> context, boolean raiseOnMismatch, MetricRegistry metricRegistry, BiFunction<T, T, Boolean> comparator) {
         this.name = name;
         this.context = context;
         this.raiseOnMismatch = raiseOnMismatch;
+        this.comparator = comparator;
         controlTimer = getMetrics(metricRegistry).timer(MetricRegistry.name(NAMESPACE_PREFIX, this.name, "control"));
         candidateTimer = getMetrics(metricRegistry).timer(MetricRegistry.name(NAMESPACE_PREFIX, this.name, "candidate"));
         mismatchCount = getMetrics(metricRegistry).counter(MetricRegistry.name(NAMESPACE_PREFIX, this.name, "mismatch"));
@@ -93,7 +100,7 @@ public class Experiment<T> {
 
     private T runSync(Supplier<T> control, Supplier<T> candidate) throws Exception {
         Observation<T> controlObservation;
-        Optional<Observation> candidateObservation = Optional.empty();
+        Optional<Observation<T>> candidateObservation = Optional.empty();
         if (Math.random() < 0.5) {
             controlObservation = executeResult("control", controlTimer, control, true);
             if (runIf() && enabled()) {
@@ -107,13 +114,13 @@ public class Experiment<T> {
         }
 
         countExceptions(candidateObservation, candidateExceptionCount);
-        Result<T> result = new Result(this, controlObservation, candidateObservation, context);
+        Result<T> result = new Result<T>(this, controlObservation, candidateObservation, context);
         publish(result);
         return controlObservation.getValue();
     }
 
     public T runAsync(Supplier<T> control, Supplier<T> candidate) throws Exception {
-        Future<Optional<Observation>> observationFutureCandidate = null;
+        Future<Optional<Observation<T>>> observationFutureCandidate = null;
         Future<Observation<T>> observationFutureControl;
 
         if (Math.random() < 0.5) {
@@ -134,25 +141,25 @@ public class Experiment<T> {
         } catch (InterruptedException | ExecutionException e) {
             throw new RuntimeException(e);
         }
-        Optional<Observation> candidateObservation = Optional.empty();
+        Optional<Observation<T>> candidateObservation = Optional.empty();
         if (observationFutureCandidate != null) {
             candidateObservation = observationFutureCandidate.get();
         }
 
         countExceptions(candidateObservation, candidateExceptionCount);
-        Result<T> result = new Result(this, controlObservation, candidateObservation, context);
+        Result<T> result = new Result<>(this, controlObservation, candidateObservation, context);
         publish(result);
         return controlObservation.getValue();
     }
 
-    private void countExceptions(Optional<Observation> observation, Counter exceptions) {
+    private void countExceptions(Optional<Observation<T>> observation, Counter exceptions) {
         if (observation.isPresent() && observation.get().getException().isPresent()) {
             exceptions.inc();
         }
     }
 
     public Observation<T> executeResult(String name, Timer timer, Supplier<T> control, boolean shouldThrow) throws Exception {
-        Observation<T> observation = new Observation(name, timer);
+        Observation<T> observation = new Observation<>(name, timer);
         observation.startTimer();
         try {
             observation.setValue(control.get());
@@ -168,7 +175,7 @@ public class Experiment<T> {
     }
 
     protected boolean compareResults(T controlVal, T candidateVal) {
-        return controlVal.equals(candidateVal);
+        return comparator.apply(controlVal, candidateVal);
     }
 
     public boolean compare(Observation<T> controlVal, Observation<T> candidateVal) throws MismatchException {
