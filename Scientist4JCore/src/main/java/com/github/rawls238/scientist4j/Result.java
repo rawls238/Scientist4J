@@ -45,4 +45,8 @@ public class Result<T> {
     public Optional<Observation<T>> getCandidate() {
       return candidate;
     }
+
+    public Map<String, Object> getContext() {
+      return context;
+    }
 }
