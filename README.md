@@ -34,6 +34,7 @@ e.run(this::controlFunction, this::candidateFunction);
 ```
 
 For an asynchronous experiment, the two functions are run asynchronously.
+
 To run an asynchronous experiment:
 
 ```java
