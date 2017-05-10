@@ -20,31 +20,29 @@ This Java port supports most of the functionality of the original Scientist libr
 
 The core component of this library is the `Experiment<T>` class. It's recommended to use this class as a Singleton. The main usage is as follows:
 
-## Synchronous Experiment
+## Basic Usage
+
+You can either run a synchronous experiment or an asynchronous experiment.
+
+For a synchronous experiment, the order in which control and candidate functions are run is randomized.
+
+To run a synchronous experiment:
 
 ```java
 Experiment<Integer> e = new Experiment("foo");
 e.run(this::controlFunction, this::candidateFunction);
 ```
 
-This does a bunch of stuff behind the scenes:
-* It decides whether or not to run the candidate function
-* Randomizes the order in which control and candidate functions are run
-* Measures the durations of all behaviors
-* Compares the result of the two
-* Swallows (but records) any exceptions raised by the candidate
-* Publishes all this information.
-
-## Asynchronous Experiment
+For an asynchronous experiment, the two functions are run asynchronously.
+To run an asynchronous experiment:
 
 ```java
 Experiment<Integer> e = new Experiment("foo");
 e.runAsync(this::controlFunction, this::candidateFunction);
 ```
 
-This does a bunch of stuff behind the scenes:
+Behind the scenes the following occurs in both cases:
 * It decides whether or not to run the candidate function
-* Runs the two functions asynchronously
 * Measures the durations of all behaviors
 * Compares the result of the two
 * Swallows (but records) any exceptions raised by the candidate
@@ -62,7 +60,7 @@ The following metrics are reported which have the form `scientist.[experiment na
 * counter of number of mismatches
 * counter of candidate exceptions
 
-You can provide your own metric registry object/bean via the constructor or by extending the Experiement class and overriding the `getMetrics` method.
+You can provide your own metric registry object/bean via the constructor or by extending the Experiment class and overriding the `getMetrics` method.
 
 ## Optional Configuration
 
