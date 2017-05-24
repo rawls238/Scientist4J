@@ -11,7 +11,7 @@ A port of Github's refactoring tool [Scientist](https://github.com/github/scient
 <dependency>
     <groupId>com.github.rawls238</groupId>
     <artifactId>Scientist4JCore</artifactId>
-    <version>0.3</version>
+    <version>0.4</version>
 </dependency>
 ```
 # Usage
