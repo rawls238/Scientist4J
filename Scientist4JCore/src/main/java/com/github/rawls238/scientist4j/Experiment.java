@@ -7,6 +7,7 @@ import com.github.rawls238.scientist4j.exceptions.MismatchException;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -59,7 +60,7 @@ public class Experiment<T> {
     }
 
     public Experiment(String name, Map<String, Object> context, boolean raiseOnMismatch, MetricRegistry metricRegistry) {
-        this(name, context, raiseOnMismatch, metricRegistry, Object::equals);
+        this(name, context, raiseOnMismatch, metricRegistry, Objects::equals);
     }
 
     public Experiment(String name, Map<String, Object> context, boolean raiseOnMismatch, MetricRegistry metricRegistry, BiFunction<T, T, Boolean> comparator) {
