@@ -62,6 +62,14 @@ public class ExperimentTest {
     }
 
     @Test
+    public void itHandlesNullValues() throws Exception {
+        Integer val = new Experiment<Integer>("test", true)
+                .run(() -> null, () -> null);
+
+        assertThat(val).isNull();
+    }
+
+    @Test
     public void nonAsyncRunsLongTime() throws Exception {
         Experiment<Integer> exp = new Experiment<>("test", true);
         Date date1 = new Date();
