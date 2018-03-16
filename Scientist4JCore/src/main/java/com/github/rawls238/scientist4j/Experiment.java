@@ -213,7 +213,7 @@ public class Experiment<T> {
                 .append(exceptionName).append(" ").append(stackTrace).toString();
         } else {
             msg = new StringBuilder().append(candidateVal.getName()).append(" does not match control value (")
-                .append(controlVal.getValue()).append(" != ").append(candidateVal.getValue()).append(")").toString();
+                .append(controlVal.getValue().toString()).append(" != ").append(candidateVal.getValue().toString()).append(")").toString();
         }
         throw new MismatchException(msg);
     }
