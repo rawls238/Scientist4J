@@ -18,7 +18,7 @@ import java.util.function.Supplier;
 
 public class Experiment<T> {
 
-    private final ExecutorService executor = Executors.newFixedThreadPool(2);
+    private final ExecutorService executor;
     private static final String NAMESPACE_PREFIX = "scientist";
     private static final MetricRegistry metrics = new MetricRegistry();
     private final String name;
@@ -63,7 +63,14 @@ public class Experiment<T> {
         this(name, context, raiseOnMismatch, metricRegistry, Objects::equals);
     }
 
-    public Experiment(String name, Map<String, Object> context, boolean raiseOnMismatch, MetricRegistry metricRegistry, BiFunction<T, T, Boolean> comparator) {
+    public Experiment(String name, Map<String, Object> context, boolean raiseOnMismatch,
+                      MetricRegistry metricRegistry, BiFunction<T, T, Boolean> comparator) {
+        this(name, context, raiseOnMismatch, metricRegistry, comparator, Executors.newFixedThreadPool(2));
+    }
+
+    public Experiment(String name, Map<String, Object> context, boolean raiseOnMismatch,
+                      MetricRegistry metricRegistry, BiFunction<T, T, Boolean> comparator,
+                      ExecutorService executorService) {
         this.name = name;
         this.context = context;
         this.raiseOnMismatch = raiseOnMismatch;
@@ -73,6 +80,7 @@ public class Experiment<T> {
         mismatchCount = getMetrics(metricRegistry).counter(MetricRegistry.name(NAMESPACE_PREFIX, this.name, "mismatch"));
         candidateExceptionCount = getMetrics(metricRegistry).counter(MetricRegistry.name(NAMESPACE_PREFIX, this.name, "candidate.exception"));
         totalCount = getMetrics(metricRegistry).counter(MetricRegistry.name(NAMESPACE_PREFIX, this.name, "total"));
+        executor = executorService;
     }
 
     /**
