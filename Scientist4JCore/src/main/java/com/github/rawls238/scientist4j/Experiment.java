@@ -91,6 +91,11 @@ public class Experiment<T> {
         return metricRegistry != null ? metricRegistry : metrics;
     }
 
+    /**
+     * Note that if {@code raiseOnMismatch} is true, {@link #runAsync(Supplier, Supplier)} will block waiting for
+     * the candidate function to complete before it can raise any resulting errors. In situations where the candidate
+     * function may be significantly slower than the control, it is <em>not</em> recommended to raise on mismatch.
+     */
     public boolean getRaiseOnMismatch() {
         return raiseOnMismatch;
     }
@@ -129,19 +134,20 @@ public class Experiment<T> {
     }
 
     public T runAsync(Supplier<T> control, Supplier<T> candidate) throws Exception {
-        Future<Optional<Observation<T>>> observationFutureCandidate = null;
+        Future<Optional<Observation<T>>> observationFutureCandidate;
         Future<Observation<T>> observationFutureControl;
 
-        if (Math.random() < 0.5) {
-            observationFutureControl = executor.submit(() -> executeResult("control", controlTimer, control, true));
-            if (runIf() && enabled()) {
+        if (runIf() && enabled()) {
+            if (Math.random() < 0.5) {
+                observationFutureControl = executor.submit(() -> executeResult("control", controlTimer, control, true));
                 observationFutureCandidate = executor.submit(() -> Optional.of(executeResult("candidate", candidateTimer, candidate, false)));
+            } else {
+                observationFutureCandidate = executor.submit(() -> Optional.of(executeResult("candidate", candidateTimer, candidate, false)));
+                observationFutureControl = executor.submit(() -> executeResult("control", controlTimer, control, true));
             }
         } else {
-            if (runIf() && enabled()) {
-                observationFutureCandidate = executor.submit(() -> Optional.of(executeResult("candidate", candidateTimer, candidate, false)));
-            }
             observationFutureControl = executor.submit(() -> executeResult("control", controlTimer, control, true));
+            observationFutureCandidate = null;
         }
 
         Observation<T> controlObservation;
@@ -150,6 +156,21 @@ public class Experiment<T> {
         } catch (InterruptedException | ExecutionException e) {
             throw new RuntimeException(e);
         }
+
+        Future<Void> publishedResult = executor.submit(() -> publishAsync(controlObservation, observationFutureCandidate));
+
+        if (raiseOnMismatch) {
+            try {
+                publishedResult.get();
+            } catch (ExecutionException e) {
+                throw (Exception) e.getCause();
+            }
+        }
+
+        return controlObservation.getValue();
+    }
+
+    private Void publishAsync(Observation<T> controlObservation, Future<Optional<Observation<T>>> observationFutureCandidate) throws Exception {
         Optional<Observation<T>> candidateObservation = Optional.empty();
         if (observationFutureCandidate != null) {
             candidateObservation = observationFutureCandidate.get();
@@ -158,7 +179,7 @@ public class Experiment<T> {
         countExceptions(candidateObservation, candidateExceptionCount);
         Result<T> result = new Result<>(this, controlObservation, candidateObservation, context);
         publish(result);
-        return controlObservation.getValue();
+        return null;
     }
 
     private void countExceptions(Optional<Observation<T>> observation, Counter exceptions) {
