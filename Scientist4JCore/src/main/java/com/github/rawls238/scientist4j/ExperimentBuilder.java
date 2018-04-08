@@ -4,6 +4,9 @@ import com.codahale.metrics.MetricRegistry;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ForkJoinPool;
 import java.util.function.BiFunction;
 
 public class ExperimentBuilder<T> {
@@ -11,6 +14,7 @@ public class ExperimentBuilder<T> {
     private MetricRegistry registry;
     private BiFunction<T, T, Boolean> comparator;
     private Map<String, Object> context;
+    private ExecutorService executorService;
 
     public ExperimentBuilder() {
         context = new HashMap<>();
@@ -33,8 +37,14 @@ public class ExperimentBuilder<T> {
         return this;
     }
 
+    public ExperimentBuilder<T> withExecutorService(ExecutorService executorService) {
+        this.executorService = executorService;
+        return this;
+    }
+
     public Experiment<T> build() {
         assert name != null;
-        return new Experiment<>(name, context, false, registry, comparator);
+        return new Experiment<>(name, context, false, registry, comparator,
+            executorService);
     }
 }
