@@ -1,9 +1,9 @@
 package com.github.rawls238.scientist4j;
 
-import com.codahale.metrics.Counter;
-import com.codahale.metrics.MetricRegistry;
-import com.codahale.metrics.Timer;
 import com.github.rawls238.scientist4j.exceptions.MismatchException;
+import io.dropwizard.metrics5.Counter;
+import io.dropwizard.metrics5.MetricRegistry;
+import io.dropwizard.metrics5.Timer;
 
 import java.util.HashMap;
 import java.util.Map;

@@ -1,8 +1,9 @@
 package com.github.rawls238.scientist4j;
 
-import com.codahale.metrics.Counter;
-import com.codahale.metrics.MetricRegistry;
 import com.github.rawls238.scientist4j.exceptions.MismatchException;
+import io.dropwizard.metrics5.Counter;
+import io.dropwizard.metrics5.MetricName;
+import io.dropwizard.metrics5.MetricRegistry;
 import org.junit.Test;
 
 import java.util.Date;
@@ -94,14 +95,13 @@ public class ExperimentTest {
 
         exp.run(() -> 1, this::exceptionThrowingFunction);
 
-        Counter result = metrics.getCounters().get("scientist.test.candidate.exception");
+        Counter result = metrics.getCounters().get(MetricName.build("scientist", "test", "candidate", "exception"));
         assertThat(result.getCount()).isEqualTo(1);
     }
 
     @Test
     public void shouldUseCustomComparator() throws Exception {
-        @SuppressWarnings("unchecked")
-        final BiFunction<Integer, Integer, Boolean> comparator = mock(BiFunction.class);
+        @SuppressWarnings("unchecked") final BiFunction<Integer, Integer, Boolean> comparator = mock(BiFunction.class);
         when(comparator.apply(1, 2)).thenReturn(false);
         final Experiment<Integer> e = new ExperimentBuilder<Integer>()
                 .withName("test")
