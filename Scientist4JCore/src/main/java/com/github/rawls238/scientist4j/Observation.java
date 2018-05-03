@@ -1,8 +1,6 @@
 package com.github.rawls238.scientist4j;
 
-import com.codahale.metrics.Metric;
-import com.codahale.metrics.MetricRegistry;
-import com.codahale.metrics.Timer;
+import io.dropwizard.metrics5.Timer;
 
 import java.util.HashMap;
 import java.util.Map;
