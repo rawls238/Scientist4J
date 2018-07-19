@@ -128,20 +128,21 @@ public class Experiment<T> {
         return controlObservation.getValue();
     }
 
-    public T runAsync(Supplier<T> control, Supplier<T> candidate) throws Exception {
-        Future<Optional<Observation<T>>> observationFutureCandidate = null;
+    public T runAsync(Supplier<T> control, Supplier<T> candidate) {
+        Future<Optional<Observation<T>>> observationFutureCandidate;
         Future<Observation<T>> observationFutureControl;
 
-        if (Math.random() < 0.5) {
-            observationFutureControl = executor.submit(() -> executeResult("control", controlTimer, control, true));
-            if (runIf() && enabled()) {
+        if (runIf() && enabled()) {
+            if (Math.random() < 0.5) {
+                observationFutureControl = executor.submit(() -> executeResult("control", controlTimer, control, true));
                 observationFutureCandidate = executor.submit(() -> Optional.of(executeResult("candidate", candidateTimer, candidate, false)));
+            } else {
+                observationFutureCandidate = executor.submit(() -> Optional.of(executeResult("candidate", candidateTimer, candidate, false)));
+                observationFutureControl = executor.submit(() -> executeResult("control", controlTimer, control, true));
             }
         } else {
-            if (runIf() && enabled()) {
-                observationFutureCandidate = executor.submit(() -> Optional.of(executeResult("candidate", candidateTimer, candidate, false)));
-            }
             observationFutureControl = executor.submit(() -> executeResult("control", controlTimer, control, true));
+            observationFutureCandidate = null;
         }
 
         Observation<T> controlObservation;
@@ -150,15 +151,25 @@ public class Experiment<T> {
         } catch (InterruptedException | ExecutionException e) {
             throw new RuntimeException(e);
         }
-        Optional<Observation<T>> candidateObservation = Optional.empty();
-        if (observationFutureCandidate != null) {
-            candidateObservation = observationFutureCandidate.get();
-        }
 
-        countExceptions(candidateObservation, candidateExceptionCount);
-        Result<T> result = new Result<>(this, controlObservation, candidateObservation, context);
-        publish(result);
+        executor.submit(() -> publishAsync(controlObservation, observationFutureCandidate));
+
         return controlObservation.getValue();
+    }
+
+    private void publishAsync(Observation<T> controlObservation, Future<Optional<Observation<T>>> observationFutureCandidate) {
+        try {
+            Optional<Observation<T>> candidateObservation = Optional.empty();
+            if (observationFutureCandidate != null) {
+                candidateObservation = observationFutureCandidate.get();
+            }
+
+            countExceptions(candidateObservation, candidateExceptionCount);
+            Result<T> result = new Result<>(this, controlObservation, candidateObservation, context);
+            publish(result);
+        } catch (Exception ignored) {
+
+        }
     }
 
     private void countExceptions(Optional<Observation<T>> observation, Counter exceptions) {
