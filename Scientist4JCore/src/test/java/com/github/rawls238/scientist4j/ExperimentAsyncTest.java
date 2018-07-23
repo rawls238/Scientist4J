@@ -25,6 +25,15 @@ public class ExperimentAsyncTest {
     return 3;
   }
 
+  private Integer shortSleepFunction() {
+    try {
+      Thread.sleep(101);
+    } catch (InterruptedException e) {
+      e.printStackTrace();
+    }
+    return 3;
+  }
+
     private Integer safeFunction() {
       return 3;
     }
@@ -135,6 +144,25 @@ public class ExperimentAsyncTest {
     String val = exp.runAsync(getThreadName, getThreadName);
 
     assertThat(val).isEqualTo(threadName);
+  }
+
+  @Test
+  public void raiseOnMismatchRunsSlower() throws Exception {
+    Experiment<Integer> raisesOnMismatch = new Experiment("raise", true);
+    Experiment<Integer> doesNotRaiseOnMismatch = new Experiment("does not raise");
+    final long raisesExecutionTime = timeExperiment(raisesOnMismatch);
+    final long doesNotRaiseExecutionTime = timeExperiment(doesNotRaiseOnMismatch);
+
+    assertThat(raisesExecutionTime).isGreaterThan(doesNotRaiseExecutionTime);
+    assertThat(raisesExecutionTime).isGreaterThan(1000);
+    assertThat(doesNotRaiseExecutionTime).isLessThan(200);
+  }
+
+  private long timeExperiment(final Experiment<Integer> exp) throws Exception {
+    Date date1 = new Date();
+    exp.runAsync(this::shortSleepFunction, this::sleepFunction);
+    Date date2 = new Date();
+    return date2.getTime() - date1.getTime();
   }
 
 }
