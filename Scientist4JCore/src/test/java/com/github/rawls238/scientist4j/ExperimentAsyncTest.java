@@ -4,9 +4,9 @@ import com.github.rawls238.scientist4j.exceptions.MismatchException;
 import org.junit.Test;
 
 import java.util.Date;
+import java.util.concurrent.Callable;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
-import java.util.function.Supplier;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -139,7 +139,7 @@ public class ExperimentAsyncTest {
         .withName("test")
         .withExecutorService(Executors.newFixedThreadPool(4, threadFactory))
         .build();
-    Supplier<String> getThreadName = () -> Thread.currentThread().getName();
+    Callable<String> getThreadName = () -> Thread.currentThread().getName();
 
     String val = exp.runAsync(getThreadName, getThreadName);
 
