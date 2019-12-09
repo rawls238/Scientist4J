@@ -3,4 +3,5 @@ jdk:
     - oraclejdk8
 sudo: false
 install: true
+dist: trusty
 script: mvn clean test
