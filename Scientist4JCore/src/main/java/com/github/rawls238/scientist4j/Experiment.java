@@ -9,12 +9,12 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.function.BiFunction;
-import java.util.function.Supplier;
 
 public class Experiment<T> {
 
@@ -92,7 +92,7 @@ public class Experiment<T> {
     }
 
     /**
-     * Note that if {@code raiseOnMismatch} is true, {@link #runAsync(Supplier, Supplier)} will block waiting for
+     * Note that if {@code raiseOnMismatch} is true, {@link #runAsync(Callable, Callable)} will block waiting for
      * the candidate function to complete before it can raise any resulting errors. In situations where the candidate
      * function may be significantly slower than the control, it is <em>not</em> recommended to raise on mismatch.
      */
@@ -104,7 +104,7 @@ public class Experiment<T> {
         return name;
     }
 
-    public T run(Supplier<T> control, Supplier<T> candidate) throws Exception {
+    public T run(Callable<T> control, Callable<T> candidate) throws Exception {
         if (isAsync()) {
             return runAsync(control, candidate);
         } else {
@@ -112,7 +112,7 @@ public class Experiment<T> {
         }
     }
 
-    private T runSync(Supplier<T> control, Supplier<T> candidate) throws Exception {
+    private T runSync(Callable<T> control, Callable<T> candidate) throws Exception {
         Observation<T> controlObservation;
         Optional<Observation<T>> candidateObservation = Optional.empty();
         if (Math.random() < 0.5) {
@@ -133,7 +133,7 @@ public class Experiment<T> {
         return controlObservation.getValue();
     }
 
-    public T runAsync(Supplier<T> control, Supplier<T> candidate) throws Exception {
+    public T runAsync(Callable<T> control, Callable<T> candidate) throws Exception {
         Future<Optional<Observation<T>>> observationFutureCandidate;
         Future<Observation<T>> observationFutureControl;
 
@@ -188,11 +188,11 @@ public class Experiment<T> {
         }
     }
 
-    public Observation<T> executeResult(String name, Timer timer, Supplier<T> control, boolean shouldThrow) throws Exception {
+    public Observation<T> executeResult(String name, Timer timer, Callable<T> control, boolean shouldThrow) throws Exception {
         Observation<T> observation = new Observation<>(name, timer);
         observation.startTimer();
         try {
-            observation.setValue(control.get());
+            observation.setValue(control.call());
         } catch (Exception e) {
             observation.setException(e);
         } finally {
