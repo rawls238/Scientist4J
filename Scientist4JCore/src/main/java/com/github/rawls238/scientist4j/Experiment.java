@@ -19,7 +19,7 @@ public class Experiment<T> {
 
     private final ExecutorService executor;
     private static final String NAMESPACE_PREFIX = "scientist";
-    private static final MetricsProvider metrics = new NoopMetricsProvider();
+    private static final MetricsProvider<?> metrics = new NoopMetricsProvider();
     private final String name;
     private final boolean raiseOnMismatch;
     private Map<String, Object> context;
@@ -38,7 +38,7 @@ public class Experiment<T> {
         this(name, false, null);
     }
 
-    public Experiment(String name, MetricsProvider metricsProvider) {
+    public Experiment(String name, MetricsProvider<?> metricsProvider) {
         this(name, false, metricsProvider);
     }
 
@@ -46,7 +46,7 @@ public class Experiment<T> {
         this(name, context, false, null);
     }
 
-    public Experiment(String name, Map<String, Object> context, MetricsProvider metricsProvider) {
+    public Experiment(String name, Map<String, Object> context, MetricsProvider<?> metricsProvider) {
         this(name, context, false, metricsProvider);
     }
 
@@ -54,21 +54,21 @@ public class Experiment<T> {
         this(name, new HashMap<>(), raiseOnMismatch, null);
     }
 
-    public Experiment(String name, boolean raiseOnMismatch, MetricsProvider metricsProvider) {
+    public Experiment(String name, boolean raiseOnMismatch, MetricsProvider<?> metricsProvider) {
         this(name, new HashMap<>(), raiseOnMismatch, metricsProvider);
     }
 
-    public Experiment(String name, Map<String, Object> context, boolean raiseOnMismatch, MetricsProvider metricsProvider) {
+    public Experiment(String name, Map<String, Object> context, boolean raiseOnMismatch, MetricsProvider<?> metricsProvider) {
         this(name, context, raiseOnMismatch, metricsProvider, Objects::equals);
     }
 
     public Experiment(String name, Map<String, Object> context, boolean raiseOnMismatch,
-                      MetricsProvider metricsProvider, BiFunction<T, T, Boolean> comparator) {
+                      MetricsProvider<?> metricsProvider, BiFunction<T, T, Boolean> comparator) {
         this(name, context, raiseOnMismatch, metricsProvider, comparator, Executors.newFixedThreadPool(2));
     }
 
     public Experiment(String name, Map<String, Object> context, boolean raiseOnMismatch,
-                      MetricsProvider metricsProvider, BiFunction<T, T, Boolean> comparator,
+                      MetricsProvider<?> metricsProvider, BiFunction<T, T, Boolean> comparator,
                       ExecutorService executorService) {
         this.name = name;
         this.context = context;
@@ -86,7 +86,7 @@ public class Experiment<T> {
      * Allow override here if extending the class, use the one passed into constructor if not null
      * or resort to the default created one internally
      */
-    public MetricsProvider getMetrics(MetricsProvider metricsProvider) {
+    public MetricsProvider<?> getMetrics(MetricsProvider<?> metricsProvider) {
         return metricsProvider != null ? metricsProvider : metrics;
     }
 
