@@ -10,7 +10,7 @@ import java.util.function.BiFunction;
 
 public class ExperimentBuilder<T> {
     private String name;
-    private MetricsProvider metricsProvider;
+    private MetricsProvider<?> metricsProvider;
     private BiFunction<T, T, Boolean> comparator;
     private Map<String, Object> context;
     private ExecutorService executorService;
@@ -26,7 +26,7 @@ public class ExperimentBuilder<T> {
         return this;
     }
 
-    public ExperimentBuilder<T> withProvider(final MetricsProvider metricsProvider) {
+    public ExperimentBuilder<T> withProvider(final MetricsProvider<?> metricsProvider) {
         this.metricsProvider = metricsProvider;
         return this;
     }
