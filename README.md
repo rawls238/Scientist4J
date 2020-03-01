@@ -49,28 +49,37 @@ Behind the scenes the following occurs in both cases:
 * Publishes all this information.
 
 
-## Dropwizard
+## Metrics
 
-Out of the box this uses [Dropwizard metrics](https://dropwizard.github.io/metrics/3.1.0/) to report the following stats.
-The following metrics are reported which have the form `scientist.[experiment name].*`:
+Out of the box this uses a `NoopMetricsProvider`. This is not very useful. You’ll want to pick use of the built-in providers or implement your own `MetricsProvider`, which will report to your chosen registry:
 
-* duration of default behavior in ms
-* duration of candidate behavior in ms
+* duration of default behavior in ns
+* duration of candidate behavior in ns
 * counter of total number of users going through the codepath
 * counter of number of mismatches
 * counter of candidate exceptions
 
-You can provide your own metric registry object/bean via the constructor or by extending the Experiment class and overriding the `getMetrics` method.
+### Dropwizard
+
+`DropwizardMetricsProvider` uses [Dropwizard metrics](https://dropwizard.github.io/metrics/) to report the experiment stats.
+The metrics have the form `scientist.[experiment name].*`.
+
+
+### Micrometer
+
+`MicrometerMetricsProvider` uses [Micrometer](https://micrometer.io) to report the experiment stats.
+The metrics have the form `scientist.[experiment name].*`.
+
 
 ## Optional Configuration
 
 Users can optionally override the following functions:
 
-* publish (to publish results of an experiment if you don't want to use the default Dropwizard metrics)
-* compareResults (by default this library just uses `equals` between objects for equality, but in case you want to special case equality between objects)
-* enabled (to limit what % of users get exposed to the new code path - by default it's 100%)
-* runIf (to enforce conditional behavior on who should be exposed to the new code path)
-* isAsync (force using the async for legacy code or move to runAsync method)
+* `publish` (to publish results of an experiment if you don’t want to supplement the default `MetricsProvider`’s publishing mechanism)
+* `compareResults` (by default this library just uses `equals` between objects for equality, but in case you want to special case equality between objects)
+* `enabled` (to limit what % of users get exposed to the new code path - by default it's 100%)
+* `runIf` (to enforce conditional behavior on who should be exposed to the new code path)
+* `isAsync` (force using the async for legacy code or move to `runAsync` method)
 
 
 License: MIT

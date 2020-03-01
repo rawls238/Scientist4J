@@ -1,6 +1,7 @@
 package com.github.rawls238.scientist4j;
 
-import io.dropwizard.metrics5.MetricRegistry;
+import com.github.rawls238.scientist4j.metrics.MetricsProvider;
+import com.github.rawls238.scientist4j.metrics.NoopMetricsProvider;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -9,7 +10,7 @@ import java.util.function.BiFunction;
 
 public class ExperimentBuilder<T> {
     private String name;
-    private MetricRegistry registry;
+    private MetricsProvider metricsProvider;
     private BiFunction<T, T, Boolean> comparator;
     private Map<String, Object> context;
     private ExecutorService executorService;
@@ -17,7 +18,7 @@ public class ExperimentBuilder<T> {
     public ExperimentBuilder() {
         context = new HashMap<>();
         comparator = Object::equals;
-        registry = new MetricRegistry();
+        metricsProvider = new NoopMetricsProvider();
     }
 
     public ExperimentBuilder<T> withName(final String name) {
@@ -25,8 +26,8 @@ public class ExperimentBuilder<T> {
         return this;
     }
 
-    public ExperimentBuilder<T> withRegistry(final MetricRegistry registry) {
-        this.registry = registry;
+    public ExperimentBuilder<T> withProvider(final MetricsProvider metricsProvider) {
+        this.metricsProvider = metricsProvider;
         return this;
     }
 
@@ -42,7 +43,7 @@ public class ExperimentBuilder<T> {
 
     public Experiment<T> build() {
         assert name != null;
-        return new Experiment<>(name, context, false, registry, comparator,
+        return new Experiment<>(name, context, false, metricsProvider, comparator,
             executorService);
     }
 }

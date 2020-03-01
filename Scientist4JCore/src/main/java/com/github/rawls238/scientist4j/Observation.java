@@ -1,9 +1,7 @@
 package com.github.rawls238.scientist4j;
 
-import io.dropwizard.metrics5.Timer;
+import com.github.rawls238.scientist4j.metrics.MetricsProvider.Timer;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Optional;
 
 public class Observation<T> {
@@ -11,9 +9,7 @@ public class Observation<T> {
     private String name;
     private Optional<Exception> exception;
     private T value;
-    private Timer.Context timerContext;
     private Timer timer;
-    private long duration;
 
     public Observation(String name, Timer timer) {
       this.name = name;
@@ -41,15 +37,11 @@ public class Observation<T> {
         return exception;
     }
 
-    public void startTimer() {
-        timerContext = timer.time();
-    }
-
-    public void endTimer() {
-        duration = timerContext.stop();
-    }
-
     public long getDuration() {
-        return duration;
+        return timer.getDuration();
+    }
+
+    public void time(Runnable runnable) {
+        timer.record(runnable);
     }
 }

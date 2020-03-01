@@ -1,6 +1,7 @@
 package com.github.rawls238.scientist4j;
 
 import com.github.rawls238.scientist4j.exceptions.MismatchException;
+import com.github.rawls238.scientist4j.metrics.DropwizardMetricsProvider;
 import io.dropwizard.metrics5.Counter;
 import io.dropwizard.metrics5.MetricName;
 import io.dropwizard.metrics5.MetricRegistry;
@@ -90,12 +91,12 @@ public class ExperimentTest {
 
     @Test
     public void candidateExceptionsAreCounted() throws Exception {
-        MetricRegistry metrics = new MetricRegistry();
-        Experiment<Integer> exp = new Experiment<>("test", metrics);
+        final DropwizardMetricsProvider provider = new DropwizardMetricsProvider();
+        Experiment<Integer> exp = new Experiment<>("test", provider);
 
         exp.run(() -> 1, this::exceptionThrowingFunction);
 
-        Counter result = metrics.getCounters().get(MetricName.build("scientist", "test", "candidate", "exception"));
+        Counter result = provider.getRegistry().getCounters().get(MetricName.build("scientist", "test", "candidate", "exception"));
         assertThat(result.getCount()).isEqualTo(1);
     }
 
