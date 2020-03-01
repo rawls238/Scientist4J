@@ -2,7 +2,6 @@ package com.github.rawls238.scientist4j;
 
 import com.github.rawls238.scientist4j.exceptions.MismatchException;
 import com.github.rawls238.scientist4j.metrics.MetricsProvider;
-import com.github.rawls238.scientist4j.metrics.NoopMetricsProvider;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -19,7 +18,7 @@ public class Experiment<T> {
 
     private final ExecutorService executor;
     private static final String NAMESPACE_PREFIX = "scientist";
-    private static final MetricsProvider<?> metrics = new NoopMetricsProvider();
+    private final MetricsProvider<?> metricsProvider;
     private final String name;
     private final boolean raiseOnMismatch;
     private Map<String, Object> context;
@@ -30,28 +29,16 @@ public class Experiment<T> {
     private final MetricsProvider.Counter totalCount;
     private final BiFunction<T, T, Boolean> comparator;
 
-    public Experiment() {
-        this("Experiment");
-    }
-
-    public Experiment(String name) {
-        this(name, false, null);
+    public Experiment(MetricsProvider<?> metricsProvider) {
+        this("Experiment", metricsProvider);
     }
 
     public Experiment(String name, MetricsProvider<?> metricsProvider) {
         this(name, false, metricsProvider);
     }
 
-    public Experiment(String name, Map<String, Object> context) {
-        this(name, context, false, null);
-    }
-
     public Experiment(String name, Map<String, Object> context, MetricsProvider<?> metricsProvider) {
         this(name, context, false, metricsProvider);
-    }
-
-    public Experiment(String name, boolean raiseOnMismatch) {
-        this(name, new HashMap<>(), raiseOnMismatch, null);
     }
 
     public Experiment(String name, boolean raiseOnMismatch, MetricsProvider<?> metricsProvider) {
@@ -74,20 +61,20 @@ public class Experiment<T> {
         this.context = context;
         this.raiseOnMismatch = raiseOnMismatch;
         this.comparator = comparator;
-        controlTimer = getMetrics(metricsProvider).timer(NAMESPACE_PREFIX, this.name, "control");
-        candidateTimer = getMetrics(metricsProvider).timer(NAMESPACE_PREFIX, this.name, "candidate");
-        mismatchCount = getMetrics(metricsProvider).counter(NAMESPACE_PREFIX, this.name, "mismatch");
-        candidateExceptionCount = getMetrics(metricsProvider).counter(NAMESPACE_PREFIX, this.name, "candidate.exception");
-        totalCount = getMetrics(metricsProvider).counter(NAMESPACE_PREFIX, this.name, "total");
+        this.metricsProvider = metricsProvider;
+        controlTimer = getMetricsProvider().timer(NAMESPACE_PREFIX, this.name, "control");
+        candidateTimer = getMetricsProvider().timer(NAMESPACE_PREFIX, this.name, "candidate");
+        mismatchCount = getMetricsProvider().counter(NAMESPACE_PREFIX, this.name, "mismatch");
+        candidateExceptionCount = getMetricsProvider().counter(NAMESPACE_PREFIX, this.name, "candidate.exception");
+        totalCount = getMetricsProvider().counter(NAMESPACE_PREFIX, this.name, "total");
         executor = executorService;
     }
 
     /**
-     * Allow override here if extending the class, use the one passed into constructor if not null
-     * or resort to the default created one internally
+     * Allow override here if extending the class
      */
-    public MetricsProvider<?> getMetrics(MetricsProvider<?> metricsProvider) {
-        return metricsProvider != null ? metricsProvider : metrics;
+    public MetricsProvider<?> getMetricsProvider() {
+        return this.metricsProvider;
     }
 
     /**

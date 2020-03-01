@@ -1,6 +1,7 @@
 package com.github.rawls238.scientist4j;
 
 import com.github.rawls238.scientist4j.exceptions.MismatchException;
+import com.github.rawls238.scientist4j.metrics.NoopMetricsProvider;
 import org.junit.Test;
 
 import java.util.Date;
@@ -44,7 +45,7 @@ public class ExperimentAsyncTest {
 
     @Test
     public void itThrowsAnExceptionWhenControlFails() {
-      Experiment experiment = new Experiment("test");
+      Experiment<Integer> experiment = new Experiment<>("test", new NoopMetricsProvider());
       boolean controlThrew = false;
       try {
         experiment.runAsync(this::exceptionThrowingFunction, this::exceptionThrowingFunction);
@@ -58,7 +59,7 @@ public class ExperimentAsyncTest {
 
   @Test
   public void itDoesntThrowAnExceptionWhenCandidateFails() {
-    Experiment<Integer> experiment = new Experiment("test");
+    Experiment<Integer> experiment = new Experiment<>("test", new NoopMetricsProvider());
     boolean candidateThrew = false;
     Integer val = 0;
     try {
@@ -72,7 +73,7 @@ public class ExperimentAsyncTest {
 
   @Test
   public void itThrowsOnMismatch() {
-    Experiment<Integer> experiment = new Experiment("test", true);
+    Experiment<Integer> experiment = new Experiment<>("test", true, new NoopMetricsProvider());
     boolean candidateThrew = false;
     try {
       experiment.runAsync(this::safeFunction, this::safeFunctionWithDifferentResult);
@@ -87,7 +88,7 @@ public class ExperimentAsyncTest {
 
   @Test
   public void itDoesNotThrowOnMatch() {
-    Experiment<Integer> exp = new Experiment("test", true);
+    Experiment<Integer> exp = new Experiment<>("test", true, new NoopMetricsProvider());
     boolean candidateThrew = false;
     Integer val = 0;
     try {
@@ -102,7 +103,7 @@ public class ExperimentAsyncTest {
 
   @Test
   public void itWorksWithAnExtendedClass() {
-    Experiment<Integer> exp = new TestPublishExperiment("test");
+    Experiment<Integer> exp = new TestPublishExperiment<>("test", new NoopMetricsProvider());
     try {
       exp.run(this::safeFunction, this::safeFunction);
     } catch (Exception e) {
@@ -112,7 +113,7 @@ public class ExperimentAsyncTest {
 
   @Test
   public void asyncRunsFaster() {
-    Experiment<Integer> exp = new Experiment("test", true);
+    Experiment<Integer> exp = new Experiment<>("test", true, new NoopMetricsProvider());
     boolean candidateThrew = false;
     Integer val = 0;
     Date date1 = new Date();
@@ -137,6 +138,7 @@ public class ExperimentAsyncTest {
     ThreadFactory threadFactory = runnable -> new Thread(runnable, threadName);
     Experiment<String> exp = new ExperimentBuilder<String>()
         .withName("test")
+        .withMetricsProvider(new NoopMetricsProvider())
         .withExecutorService(Executors.newFixedThreadPool(4, threadFactory))
         .build();
     Callable<String> getThreadName = () -> Thread.currentThread().getName();
@@ -148,8 +150,8 @@ public class ExperimentAsyncTest {
 
   @Test
   public void raiseOnMismatchRunsSlower() throws Exception {
-    Experiment<Integer> raisesOnMismatch = new Experiment("raise", true);
-    Experiment<Integer> doesNotRaiseOnMismatch = new Experiment("does not raise");
+    Experiment<Integer> raisesOnMismatch = new Experiment<>("raise", true, new NoopMetricsProvider());
+    Experiment<Integer> doesNotRaiseOnMismatch = new Experiment<>("does not raise", new NoopMetricsProvider());
     final long raisesExecutionTime = timeExperiment(raisesOnMismatch);
     final long doesNotRaiseExecutionTime = timeExperiment(doesNotRaiseOnMismatch);
 

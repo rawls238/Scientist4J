@@ -6,7 +6,7 @@ A port of Github's refactoring tool [Scientist](https://github.com/github/scient
 
 # Installation
 
-```java
+```xml
 <dependency>
     <groupId>com.github.rawls238</groupId>
     <artifactId>Scientist4JCore</artifactId>
@@ -51,31 +51,38 @@ Behind the scenes the following occurs in both cases:
 
 ## Metrics
 
-Out of the box this uses a `NoopMetricsProvider`. This is not very useful. You’ll want to pick use of the built-in providers or implement your own `MetricsProvider`, which will report to your chosen registry:
+Scientist4J ships with support for two common metrics libraries—[Dropwizard metrics](https://dropwizard.github.io/metrics/)
+ and [Micrometer](https://micrometer.io). As each of these is optional, you’ll need to add your choice as an explicit dependency to your project:
 
-* duration of default behavior in ns
+```xml
+<dependency>
+    <groupId>io.dropwizard.metrics5</groupId>
+    <artifactId>metrics-core</artifactId>
+</dependency>
+```
+or
+```xml
+<dependency>
+    <groupId>io.micrometer</groupId>
+    <artifactId>micrometer-core</artifactId>
+</dependency>
+```
+
+The following metrics are reported, with the form `scientist.[experiment name].*`:
+
+* duration of default (control) behavior in ns
 * duration of candidate behavior in ns
 * counter of total number of users going through the codepath
 * counter of number of mismatches
 * counter of candidate exceptions
 
-### Dropwizard
-
-`DropwizardMetricsProvider` uses [Dropwizard metrics](https://dropwizard.github.io/metrics/) to report the experiment stats.
-The metrics have the form `scientist.[experiment name].*`.
-
-
-### Micrometer
-
-`MicrometerMetricsProvider` uses [Micrometer](https://micrometer.io) to report the experiment stats.
-The metrics have the form `scientist.[experiment name].*`.
-
+You may also implement your own `MetricsProvider`, to meet your specific needs.
 
 ## Optional Configuration
 
 Users can optionally override the following functions:
 
-* `publish` (to publish results of an experiment if you want to supplement the `MetricsProvider`’s publishing mechanism)
+* `publish` (to publish results of an experiment, if you want to supplement the `MetricsProvider`’s publishing mechanism)
 * `compareResults` (by default this library just uses `equals` between objects for equality, but in case you want to special case equality between objects)
 * `enabled` (to limit what % of users get exposed to the new code path - by default it's 100%)
 * `runIf` (to enforce conditional behavior on who should be exposed to the new code path)

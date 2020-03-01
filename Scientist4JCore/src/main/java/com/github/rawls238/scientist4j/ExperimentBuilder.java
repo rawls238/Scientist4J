@@ -1,7 +1,6 @@
 package com.github.rawls238.scientist4j;
 
 import com.github.rawls238.scientist4j.metrics.MetricsProvider;
-import com.github.rawls238.scientist4j.metrics.NoopMetricsProvider;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -18,7 +17,6 @@ public class ExperimentBuilder<T> {
     public ExperimentBuilder() {
         context = new HashMap<>();
         comparator = Object::equals;
-        metricsProvider = new NoopMetricsProvider();
     }
 
     public ExperimentBuilder<T> withName(final String name) {
@@ -26,7 +24,7 @@ public class ExperimentBuilder<T> {
         return this;
     }
 
-    public ExperimentBuilder<T> withProvider(final MetricsProvider<?> metricsProvider) {
+    public ExperimentBuilder<T> withMetricsProvider(final MetricsProvider<?> metricsProvider) {
         this.metricsProvider = metricsProvider;
         return this;
     }
@@ -43,6 +41,7 @@ public class ExperimentBuilder<T> {
 
     public Experiment<T> build() {
         assert name != null;
+        assert metricsProvider != null;
         return new Experiment<>(name, context, false, metricsProvider, comparator,
             executorService);
     }

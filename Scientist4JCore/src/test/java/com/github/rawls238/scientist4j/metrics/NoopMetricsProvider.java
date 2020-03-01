@@ -1,7 +1,9 @@
 package com.github.rawls238.scientist4j.metrics;
 
+import com.github.rawls238.scientist4j.metrics.MetricsProvider;
+
 /**
- * A default {@link MetricsProvider}, with a minimal in-memory implementation, suitable for test environments.
+ * A  minimal in-memory {@link MetricsProvider} implementation, suitable for test environments.
  */
 public class NoopMetricsProvider implements MetricsProvider<Object> {
 
