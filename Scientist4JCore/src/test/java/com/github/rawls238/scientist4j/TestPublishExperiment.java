@@ -1,10 +1,12 @@
 package com.github.rawls238.scientist4j;
 
+import com.github.rawls238.scientist4j.metrics.MetricsProvider;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class TestPublishExperiment<Integer> extends Experiment<Integer> {
-  TestPublishExperiment(String name) {
-    super(name);
+  TestPublishExperiment(String name, MetricsProvider<?> metricsProvider) {
+    super(name, metricsProvider);
   }
 
   @Override

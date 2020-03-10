@@ -1,9 +1,7 @@
 package com.github.rawls238.scientist4j;
 
 import com.github.rawls238.scientist4j.exceptions.MismatchException;
-import io.dropwizard.metrics5.Counter;
-import io.dropwizard.metrics5.MetricRegistry;
-import io.dropwizard.metrics5.Timer;
+import com.github.rawls238.scientist4j.metrics.MetricsProvider;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -20,75 +18,63 @@ public class Experiment<T> {
 
     private final ExecutorService executor;
     private static final String NAMESPACE_PREFIX = "scientist";
-    private static final MetricRegistry metrics = new MetricRegistry();
+    private final MetricsProvider<?> metricsProvider;
     private final String name;
     private final boolean raiseOnMismatch;
     private Map<String, Object> context;
-    private final Timer controlTimer;
-    private final Timer candidateTimer;
-    private final Counter mismatchCount;
-    private final Counter candidateExceptionCount;
-    private final Counter totalCount;
+    private final MetricsProvider.Timer controlTimer;
+    private final MetricsProvider.Timer candidateTimer;
+    private final MetricsProvider.Counter mismatchCount;
+    private final MetricsProvider.Counter candidateExceptionCount;
+    private final MetricsProvider.Counter totalCount;
     private final BiFunction<T, T, Boolean> comparator;
 
-    public Experiment() {
-        this("Experiment");
+    public Experiment(MetricsProvider<?> metricsProvider) {
+        this("Experiment", metricsProvider);
     }
 
-    public Experiment(String name) {
-        this(name, false, null);
+    public Experiment(String name, MetricsProvider<?> metricsProvider) {
+        this(name, false, metricsProvider);
     }
 
-    public Experiment(String name, MetricRegistry metricRegistry) {
-        this(name, false, metricRegistry);
+    public Experiment(String name, Map<String, Object> context, MetricsProvider<?> metricsProvider) {
+        this(name, context, false, metricsProvider);
     }
 
-    public Experiment(String name, Map<String, Object> context) {
-        this(name, context, false, null);
+    public Experiment(String name, boolean raiseOnMismatch, MetricsProvider<?> metricsProvider) {
+        this(name, new HashMap<>(), raiseOnMismatch, metricsProvider);
     }
 
-    public Experiment(String name, Map<String, Object> context, MetricRegistry metricRegistry) {
-        this(name, context, false, metricRegistry);
-    }
-
-    public Experiment(String name, boolean raiseOnMismatch) {
-        this(name, new HashMap<>(), raiseOnMismatch, null);
-    }
-
-    public Experiment(String name, boolean raiseOnMismatch, MetricRegistry metricRegistry) {
-        this(name, new HashMap<>(), raiseOnMismatch, metricRegistry);
-    }
-
-    public Experiment(String name, Map<String, Object> context, boolean raiseOnMismatch, MetricRegistry metricRegistry) {
-        this(name, context, raiseOnMismatch, metricRegistry, Objects::equals);
+    public Experiment(String name, Map<String, Object> context, boolean raiseOnMismatch, MetricsProvider<?> metricsProvider) {
+        this(name, context, raiseOnMismatch, metricsProvider, Objects::equals);
     }
 
     public Experiment(String name, Map<String, Object> context, boolean raiseOnMismatch,
-                      MetricRegistry metricRegistry, BiFunction<T, T, Boolean> comparator) {
-        this(name, context, raiseOnMismatch, metricRegistry, comparator, Executors.newFixedThreadPool(2));
+                      MetricsProvider<?> metricsProvider, BiFunction<T, T, Boolean> comparator) {
+        this(name, context, raiseOnMismatch, metricsProvider, comparator, Executors.newFixedThreadPool(2));
     }
 
     public Experiment(String name, Map<String, Object> context, boolean raiseOnMismatch,
-                      MetricRegistry metricRegistry, BiFunction<T, T, Boolean> comparator,
+                      MetricsProvider<?> metricsProvider, BiFunction<T, T, Boolean> comparator,
                       ExecutorService executorService) {
         this.name = name;
         this.context = context;
         this.raiseOnMismatch = raiseOnMismatch;
         this.comparator = comparator;
-        controlTimer = getMetrics(metricRegistry).timer(MetricRegistry.name(NAMESPACE_PREFIX, this.name, "control"));
-        candidateTimer = getMetrics(metricRegistry).timer(MetricRegistry.name(NAMESPACE_PREFIX, this.name, "candidate"));
-        mismatchCount = getMetrics(metricRegistry).counter(MetricRegistry.name(NAMESPACE_PREFIX, this.name, "mismatch"));
-        candidateExceptionCount = getMetrics(metricRegistry).counter(MetricRegistry.name(NAMESPACE_PREFIX, this.name, "candidate.exception"));
-        totalCount = getMetrics(metricRegistry).counter(MetricRegistry.name(NAMESPACE_PREFIX, this.name, "total"));
+        this.metricsProvider = metricsProvider;
+        controlTimer = getMetricsProvider().timer(NAMESPACE_PREFIX, this.name, "control");
+        candidateTimer = getMetricsProvider().timer(NAMESPACE_PREFIX, this.name, "candidate");
+        mismatchCount = getMetricsProvider().counter(NAMESPACE_PREFIX, this.name, "mismatch");
+        candidateExceptionCount = getMetricsProvider().counter(NAMESPACE_PREFIX, this.name, "candidate.exception");
+        totalCount = getMetricsProvider().counter(NAMESPACE_PREFIX, this.name, "total");
         executor = executorService;
     }
 
     /**
-     * Allow override here if extending the class, use the one passed into constructor if not null
-     * or resort to the default created one internally
+     * Allow override here if extending the class
      */
-    public MetricRegistry getMetrics(MetricRegistry metricRegistry) {
-        return metricRegistry != null ? metricRegistry : metrics;
+    public MetricsProvider<?> getMetricsProvider() {
+        return this.metricsProvider;
     }
 
     /**
@@ -182,26 +168,28 @@ public class Experiment<T> {
         return null;
     }
 
-    private void countExceptions(Optional<Observation<T>> observation, Counter exceptions) {
+    private void countExceptions(Optional<Observation<T>> observation, MetricsProvider.Counter exceptions) {
         if (observation.isPresent() && observation.get().getException().isPresent()) {
-            exceptions.inc();
+            exceptions.increment();
         }
     }
 
-    public Observation<T> executeResult(String name, Timer timer, Callable<T> control, boolean shouldThrow) throws Exception {
+    public Observation<T> executeResult(String name, MetricsProvider.Timer timer, Callable<T> control, boolean shouldThrow) throws Exception {
         Observation<T> observation = new Observation<>(name, timer);
-        observation.startTimer();
-        try {
-            observation.setValue(control.call());
-        } catch (Exception e) {
-            observation.setException(e);
-        } finally {
-            observation.endTimer();
-            if (shouldThrow && observation.getException().isPresent()) {
-                throw observation.getException().get();
+
+        observation.time(() -> {
+            try {
+                observation.setValue(control.call());
+            } catch (Exception e) {
+                observation.setException(e);
             }
-            return observation;
+        });
+
+        if (shouldThrow && observation.getException().isPresent()) {
+            throw observation.getException().get();
         }
+
+        return observation;
     }
 
     protected boolean compareResults(T controlVal, T candidateVal) {
@@ -210,9 +198,9 @@ public class Experiment<T> {
 
     public boolean compare(Observation<T> controlVal, Observation<T> candidateVal) throws MismatchException {
         boolean resultsMatch = !candidateVal.getException().isPresent() && compareResults(controlVal.getValue(), candidateVal.getValue());
-        totalCount.inc();
+        totalCount.increment();
         if (!resultsMatch) {
-            mismatchCount.inc();
+            mismatchCount.increment();
             handleComparisonMismatch(controlVal, candidateVal);
         }
         return true;

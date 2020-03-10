@@ -1,9 +1,11 @@
 package com.github.rawls238.scientist4j;
 
 import com.github.rawls238.scientist4j.exceptions.MismatchException;
+import com.github.rawls238.scientist4j.metrics.DropwizardMetricsProvider;
+import com.github.rawls238.scientist4j.metrics.MicrometerMetricsProvider;
+import com.github.rawls238.scientist4j.metrics.NoopMetricsProvider;
 import io.dropwizard.metrics5.Counter;
 import io.dropwizard.metrics5.MetricName;
-import io.dropwizard.metrics5.MetricRegistry;
 import org.junit.Test;
 
 import java.util.Date;
@@ -37,26 +39,26 @@ public class ExperimentTest {
 
     @Test(expected = ExpectingAnException.class)
     public void itThrowsAnExceptionWhenControlFails() throws Exception {
-        new Experiment<Integer>("test")
+        new Experiment<Integer>("test", new NoopMetricsProvider())
                 .run(this::exceptionThrowingFunction, this::exceptionThrowingFunction);
     }
 
     @Test
     public void itDoesntThrowAnExceptionWhenCandidateFails() throws Exception {
-        Experiment<Integer> experiment = new Experiment<>("test");
+        Experiment<Integer> experiment = new Experiment<>("test", new NoopMetricsProvider());
         Integer val = experiment.run(this::safeFunction, this::exceptionThrowingFunction);
         assertThat(val).isEqualTo(3);
     }
 
     @Test(expected = MismatchException.class)
     public void itThrowsOnMismatch() throws Exception {
-        new Experiment<Integer>("test", true)
+        new Experiment<Integer>("test", true, new NoopMetricsProvider())
                 .run(this::safeFunction, this::safeFunctionWithDifferentResult);
     }
 
     @Test
     public void itDoesNotThrowOnMatch() throws Exception {
-        Integer val = new Experiment<Integer>("test", true)
+        Integer val = new Experiment<Integer>("test", true, new NoopMetricsProvider())
                 .run(this::safeFunction, this::safeFunction);
 
         assertThat(val).isEqualTo(3);
@@ -64,7 +66,7 @@ public class ExperimentTest {
 
     @Test
     public void itHandlesNullValues() throws Exception {
-        Integer val = new Experiment<Integer>("test", true)
+        Integer val = new Experiment<Integer>("test", true, new NoopMetricsProvider())
                 .run(() -> null, () -> null);
 
         assertThat(val).isNull();
@@ -72,7 +74,7 @@ public class ExperimentTest {
 
     @Test
     public void nonAsyncRunsLongTime() throws Exception {
-        Experiment<Integer> exp = new Experiment<>("test", true);
+        Experiment<Integer> exp = new Experiment<>("test", true, new NoopMetricsProvider());
         Date date1 = new Date();
         Integer val = exp.run(this::sleepFunction, this::sleepFunction);
         Date date2 = new Date();
@@ -84,19 +86,30 @@ public class ExperimentTest {
 
     @Test
     public void itWorksWithAnExtendedClass() throws Exception {
-        Experiment<Integer> exp = new TestPublishExperiment<>("test");
+        Experiment<Integer> exp = new TestPublishExperiment<>("test", new NoopMetricsProvider());
         exp.run(this::safeFunction, this::safeFunction);
     }
 
     @Test
-    public void candidateExceptionsAreCounted() throws Exception {
-        MetricRegistry metrics = new MetricRegistry();
-        Experiment<Integer> exp = new Experiment<>("test", metrics);
+    public void candidateExceptionsAreCounted_dropwizard() throws Exception {
+        final DropwizardMetricsProvider provider = new DropwizardMetricsProvider();
+        Experiment<Integer> exp = new Experiment<>("test", provider);
 
         exp.run(() -> 1, this::exceptionThrowingFunction);
 
-        Counter result = metrics.getCounters().get(MetricName.build("scientist", "test", "candidate", "exception"));
+        Counter result = provider.getRegistry().getCounters().get(MetricName.build("scientist", "test", "candidate", "exception"));
         assertThat(result.getCount()).isEqualTo(1);
+    }
+
+    @Test
+    public void candidateExceptionsAreCounted_micrometer() throws Exception {
+        final MicrometerMetricsProvider provider = new MicrometerMetricsProvider();
+        Experiment<Integer> exp = new Experiment<>("test", provider);
+
+        exp.run(() -> 1, this::exceptionThrowingFunction);
+
+        io.micrometer.core.instrument.Counter result = provider.getRegistry().get("scientist.test.candidate.exception").counter();
+        assertThat(result.count()).isEqualTo(1);
     }
 
     @Test
@@ -106,6 +119,7 @@ public class ExperimentTest {
         final Experiment<Integer> e = new ExperimentBuilder<Integer>()
                 .withName("test")
                 .withComparator(comparator)
+                .withMetricsProvider(new NoopMetricsProvider())
                 .build();
 
         e.run(() -> 1, () -> 2);
