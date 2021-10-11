@@ -91,7 +91,9 @@ public class Experiment<T> {
     }
 
     public T run(Callable<T> control, Callable<T> candidate) throws Exception {
-        if (isAsync()) {
+        if (isAsyncCandidateOnly()) {
+            return runAsyncCandidateOnly(control, candidate);
+        } else if (isAsync()) {
             return runAsync(control, candidate);
         } else {
             return runSync(control, candidate);
@@ -141,6 +143,38 @@ public class Experiment<T> {
             controlObservation = observationFutureControl.get();
         } catch (InterruptedException | ExecutionException e) {
             throw new RuntimeException(e);
+        }
+
+        Future<Void> publishedResult = executor.submit(() -> publishAsync(controlObservation, observationFutureCandidate));
+
+        if (raiseOnMismatch) {
+            try {
+                publishedResult.get();
+            } catch (ExecutionException e) {
+                throw (Exception) e.getCause();
+            }
+        }
+
+        return controlObservation.getValue();
+    }
+
+    public T runAsyncCandidateOnly(Callable<T> control, Callable<T> candidate) throws Exception {
+        Future<Optional<Observation<T>>> observationFutureCandidate;
+        Observation<T> controlObservation;
+
+        if (runIf() && enabled()) {
+            if (Math.random() < 0.5) {
+                System.out.println("First candidate");
+                observationFutureCandidate = executor.submit(() -> Optional.of(executeResult("candidate", candidateTimer, candidate, false)));
+                controlObservation = executeResult("control", controlTimer, control, true);
+            } else {
+                System.out.println("First control");
+                controlObservation = executeResult("control", controlTimer, control, true);
+                observationFutureCandidate = executor.submit(() -> Optional.of(executeResult("candidate", candidateTimer, candidate, false)));
+            }
+        } else {
+            controlObservation = executeResult("control", controlTimer, control, true);
+            observationFutureCandidate = null;
         }
 
         Future<Void> publishedResult = executor.submit(() -> publishAsync(controlObservation, observationFutureCandidate));
@@ -218,6 +252,10 @@ public class Experiment<T> {
     }
 
     protected boolean isAsync() {
+        return false;
+    }
+
+    protected boolean isAsyncCandidateOnly() {
         return false;
     }
 
