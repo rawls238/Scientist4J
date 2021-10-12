@@ -125,7 +125,6 @@ public class ExperimentAsyncCandidateOnlyTest {
     }
     Date date2 = new Date();
     long difference = date2.getTime() - date1.getTime();
-    System.out.println(difference);
 
     assertThat(difference).isLessThan(2000);
     assertThat(difference).isGreaterThanOrEqualTo(1000);

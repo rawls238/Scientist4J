@@ -164,11 +164,9 @@ public class Experiment<T> {
 
         if (runIf() && enabled()) {
             if (Math.random() < 0.5) {
-                System.out.println("First candidate");
                 observationFutureCandidate = executor.submit(() -> Optional.of(executeResult("candidate", candidateTimer, candidate, false)));
                 controlObservation = executeResult("control", controlTimer, control, true);
             } else {
-                System.out.println("First control");
                 controlObservation = executeResult("control", controlTimer, control, true);
                 observationFutureCandidate = executor.submit(() -> Optional.of(executeResult("candidate", candidateTimer, candidate, false)));
             }
