@@ -10,7 +10,7 @@ A port of Github's refactoring tool [Scientist](https://github.com/github/scient
 <dependency>
     <groupId>com.github.rawls238</groupId>
     <artifactId>Scientist4JCore</artifactId>
-    <version>0.9</version>
+    <version>0.10-SNAPSHOT</version>
 </dependency>
 ```
 # Usage
@@ -39,6 +39,17 @@ To run an asynchronous experiment:
 ```java
 Experiment<Integer> e = new Experiment("foo");
 e.runAsync(this::controlFunction, this::candidateFunction);
+```
+
+There could be a situation where you want to continue to perform the work of existing functions.
+on the same thread and run an experiment on a different thread.
+For example, there is a web application with Tomcat. Tomcat has its own thread pool, 
+and you don't want the experiment to affect existing functionality.
+
+To run control on the same thread but different for candidate:
+```java
+Experiment<Integer> e = new Experiment("foo");
+e.runAsyncCandidateOnly(this::controlFunction, this::candidateFunction);
 ```
 
 Behind the scenes the following occurs in both cases:
