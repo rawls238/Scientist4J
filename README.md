@@ -10,7 +10,7 @@ A port of Github's refactoring tool [Scientist](https://github.com/github/scient
 <dependency>
     <groupId>com.github.rawls238</groupId>
     <artifactId>Scientist4JCore</artifactId>
-    <version>0.10</version>
+    <version>1.0</version>
 </dependency>
 ```
 # Usage

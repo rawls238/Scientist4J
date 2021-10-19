@@ -5,7 +5,7 @@
 
     <groupId>com.github.rawls238</groupId>
     <artifactId>Scientist4J</artifactId>
-    <version>0.10</version>
+    <version>1.0</version>
     <packaging>pom</packaging>
 
     <name>Scientist4J</name>
