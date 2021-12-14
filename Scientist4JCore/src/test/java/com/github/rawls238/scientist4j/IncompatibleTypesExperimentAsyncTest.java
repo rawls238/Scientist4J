@@ -23,6 +23,7 @@ public class IncompatibleTypesExperimentAsyncTest {
             Thread.sleep(1001);
         } catch (InterruptedException e) {
             e.printStackTrace();
+            Thread.currentThread().interrupt();
         }
         return 3;
     }
@@ -32,6 +33,7 @@ public class IncompatibleTypesExperimentAsyncTest {
             Thread.sleep(1001);
         } catch (InterruptedException e) {
             e.printStackTrace();
+            Thread.currentThread().interrupt();
         }
         return "3";
     }
