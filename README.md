@@ -1,5 +1,7 @@
 # Scientist4J
 
+*This project is no longer actively maintained.*
+
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.github.rawls238/Scientist4J/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.github.rawls238/Scientist4J)
 
 A port of Github's refactoring tool [Scientist](https://github.com/github/scientist) in Java
